@@ -10,6 +10,7 @@ import {
   type Permissions,
   type Role,
 } from "@/lib/permissions";
+import { sampleAlert, sendDocumentAlert } from "@/lib/notifications/sendDocumentAlert";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
@@ -194,4 +195,25 @@ export async function updateCompanySettings(input: CompanyInput): Promise<Action
   revalidatePath("/settings");
   revalidatePath("/", "layout");
   return { ok: true, message: "Company settings saved." };
+}
+
+/** Sends a sample confirmation email to the SAVED admin_alert_email so the setup can be verified. */
+export async function sendTestAlert(): Promise<ActionResult> {
+  const caller = await adminCaller();
+  if (!caller) return fail("Only admins can send a test alert.");
+
+  const res = await sendDocumentAlert(
+    sampleAlert({ userId: caller.userId, fullName: caller.fullName, email: caller.email, role: caller.role }),
+  );
+
+  if (!res.recipient) return fail("No admin alert email is saved yet. Enter one, click Save settings, then try again.");
+  if (res.email === "sent") {
+    const hook = res.webhook === "sent" ? " The n8n webhook was notified too." : res.webhook.startsWith("failed") ? ` (n8n webhook ${res.webhook})` : "";
+    return { ok: true, message: `Test email sent to ${res.recipient}.${hook} Check the inbox (and spam).` };
+  }
+  if (res.email.startsWith("skipped: RESEND_API_KEY")) {
+    const hook = res.webhook === "sent" ? " The n8n webhook did receive the payload." : "";
+    return fail(`Email not sent — RESEND_API_KEY is not configured on the server. Add it in Vercel (Environment Variables) and redeploy.${hook}`);
+  }
+  return fail(`Email ${res.email}. If you're using the default onboarding@resend.dev sender, Resend only delivers to your own account email until you verify a domain and set ALERT_FROM_EMAIL.`);
 }

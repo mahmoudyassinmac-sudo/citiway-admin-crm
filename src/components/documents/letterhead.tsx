@@ -3,6 +3,7 @@
 'use client';
 import React, { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback, Fragment } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { issueLetter as issueLetterAction } from '@/app/(app)/documents/actions';
 import { developerStatus, daysLeft } from '@/lib/developers';
 
 
@@ -570,7 +571,7 @@ function App({ company = {}, developers = [], agents = [], clients = [], initial
   // reference counter — advances after an issued letter is printed / exported.
   // Persisted in Supabase (company_settings.next_letter_seq); falls back to localStorage when offline.
   const dRef = useRef(d); dRef.current = d;
-  const metaRef = useRef({}); metaRef.current = { tpl, devId, agentId, lang };
+  const metaRef = useRef({}); metaRef.current = { tpl, devId, agentId, clientId, lang };
   const [seqInfo, setSeqInfo] = useState(nextSeq(YEAR));
   const [saveNote, setSaveNote] = useState('');
   const issuedRef = useRef(false); // set only by the explicit "Save & Issue" button
@@ -584,11 +585,10 @@ function App({ company = {}, developers = [], agents = [], clients = [], initial
       const meta = metaRef.current;
       const html = (cur.salutation ? `<p>${esc(cur.salutation)}</p>` : '') + (cur.body || '').split(/\n\s*\n/).filter(Boolean).map((p) => `<p>${esc(p)}</p>`).join('')
         + (cur.tableOn ? '<table>' + cur.rows.map((r) => `<tr><th>${esc(r.k)}</th><td>${esc(r.v)}</td></tr>`).join('') + '</table>' : '');
-      const tplMap = { salary: 'salary_certificate', commission: 'commission_undertaking', noc: 'noc', propnoc: 'noc' };
-      const { error } = await createClient().from('letters').insert({ ref_no: cur.ref, template_type: tplMap[meta.tpl] || 'general', language: meta.lang, recipient: cur.to || null, subject: cur.subject || null, body_html: html, developer_id: meta.devId || null, agent_id: meta.agentId || null });
-      if (error && error.code === '23505') { setSaveNote(`${cur.ref} was already issued. Click "use next" to get a fresh reference number.`); return false; }
-      if (error) { setSaveNote('Could not save the letter to the CRM: ' + error.message); return false; }
-      issuedRef.current = true; setSaveNote(`${cur.ref} issued and saved to the CRM.`); return true;
+      const res = await issueLetterAction({ refNo: cur.ref, templateType: ({ salary: 'salary_certificate', commission: 'commission_undertaking', noc: 'noc', propnoc: 'noc' })[meta.tpl] || 'general', language: meta.lang, recipient: cur.to || null, subject: cur.subject || null, bodyHtml: html, developerId: meta.devId || null, agentId: meta.agentId || null, clientId: meta.clientId || null });
+      if (!res.ok && res.duplicate) { setSaveNote(`${cur.ref} was already issued. Click "use next" to get a fresh reference number.`); return false; }
+      if (!res.ok) { setSaveNote('Could not save the letter to the CRM: ' + res.error); return false; }
+      issuedRef.current = true; setSaveNote(res.message); return true;
     } catch (e) { setSaveNote('Could not reach the CRM: ' + e.message); return false; }
   };
   useEffect(() => {

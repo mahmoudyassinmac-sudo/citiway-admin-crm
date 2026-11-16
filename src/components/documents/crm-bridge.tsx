@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { issueFinanceDocument } from "@/app/(app)/documents/actions";
 
 const CanIssueContext = createContext(true);
 
@@ -22,33 +23,32 @@ export interface FinanceRecord {
   dueDate?: string | null;
 }
 
-const isUuid = (v?: string) => !!v && /^[0-9a-f-]{36}$/i.test(v);
 
 export interface SaveResult { ok: boolean; message: string }
 
-/** Upsert into finance_documents (unique on doc_type + doc_no, so re-issuing updates instead of duplicating). */
+/**
+ * Issues the document through a server action: it upserts into finance_documents (unique on
+ * doc_type + doc_no, so re-issuing updates instead of duplicating) and emails the admin alert.
+ */
 export async function saveFinanceDocument(r: FinanceRecord): Promise<SaveResult> {
   if (!isSupabaseConfigured()) return { ok: true, message: "CRM not connected — document was not recorded." };
-  if (!r.docNo.trim()) return { ok: false, message: "Cannot issue: the document number is empty." };
-  const { error } = await createClient()
-    .from("finance_documents")
-    .upsert(
-      {
-        doc_type: r.docType,
-        doc_no: r.docNo.trim(),
-        client_id: isUuid(r.clientId) ? r.clientId : null,
-        developer_id: isUuid(r.developerId) ? r.developerId : null,
-        amount_aed: r.amount || 0,
-        vat_aed: r.vat || 0,
-        total_aed: r.total || 0,
-        status: "issued",
-        due_date: r.dueDate ?? null,
-      },
-      { onConflict: "doc_type,doc_no" },
-    );
-  return error
-    ? { ok: false, message: `Could not save ${r.docNo} to the CRM: ${error.message}` }
-    : { ok: true, message: `${r.docNo} issued and saved to the CRM (Finance documents).` };
+  try {
+    const res = await issueFinanceDocument({
+      docType: r.docType === "tax_invoice" || r.docType === "receipt" || r.docType === "rental_contract" || r.docType === "payment_voucher" ? r.docType : "other",
+      docNo: r.docNo,
+      amount: r.amount,
+      vat: r.vat,
+      total: r.total,
+      clientId: r.clientId,
+      developerId: r.developerId,
+      dueDate: r.dueDate,
+    });
+    return res.ok
+      ? { ok: true, message: res.message }
+      : { ok: false, message: `Could not save ${r.docNo || "the document"} to the CRM: ${res.error}` };
+  } catch (e) {
+    return { ok: false, message: `Could not reach the CRM: ${e instanceof Error ? e.message : "network error"}` };
+  }
 }
 
 /**
