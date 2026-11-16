@@ -6,10 +6,10 @@ export default function Loading() {
       <div className="mb-6 mt-3 h-4 w-96 max-w-full rounded bg-slate-200/70" />
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-24 rounded-2xl bg-white ring-1 ring-slate-200" />
+          <div key={i} className="h-24 rounded-2xl glass" />
         ))}
       </div>
-      <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+      <div className="rounded-2xl glass p-4">
         {[0, 1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="flex items-center gap-4 border-b border-slate-100 py-3 last:border-0">
             <div className="h-4 w-1/4 rounded bg-slate-200" />

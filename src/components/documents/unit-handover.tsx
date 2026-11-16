@@ -331,7 +331,7 @@ function Field({ label, children, hint }) {
 function Input(props) { return <input {...props} className={'field-in ' + (props.className || '')} />; }
 function Card({ title, right, children }) {
   return (
-    <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+    <section className="glass rounded-xl p-4">
       <div className="flex items-center justify-between mb-3 gap-2">
         <h3 className="font-head font-bold text-[13px] uppercase tracking-wider text-navy flex items-center gap-2"><span className="w-1 h-4 rounded bg-brand inline-block" />{title}</h3>
         {right}
@@ -423,14 +423,13 @@ function App() {
 
   return (
     <div className="min-h-screen">
-      <header className="no-print bg-navy text-white">
+      <header className="no-print cw-topbar text-white">
         <div className="max-w-[1500px] mx-auto px-5 py-3 flex items-center gap-4">
-          <div className="bg-white rounded-md px-2 py-1"><img src={LOGO} alt="Citiway" style={{ height: 28, width: 'auto', display: 'block' }} /></div>
           <div>
             <div className="font-head font-bold tracking-wide">Unit Handover &amp; Inspection Form</div>
             <div className="text-[12px] text-blue-100">Template #7 · adapts to unit layout & furnishing · multi-page A4</div>
           </div>
-          <button onClick={doPrint} className="ml-auto bg-brand hover:bg-white transition text-navy font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Print / Save as PDF</button>
+          <button onClick={doPrint} className="ml-auto btn-brand text-navy font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Print / Save as PDF</button>
         </div>
         {printMsg && <div className="max-w-[1500px] mx-auto px-5 pb-3 text-[12px] text-blue-100">{printMsg}</div>}
       </header>
@@ -518,7 +517,7 @@ function App() {
               <button type="button" onClick={clearChecks} className="border border-slate-300 text-slate-600 font-semibold text-sm px-3 rounded-lg hover:bg-slate-50">Clear</button>
             </div>
             {sections.map((sec) => (
-              <details key={sec.key} className="rounded-lg border border-slate-200 bg-white group" open={sec.items.some((it) => (d.checks[it.id] || {}).s === 'repair')}>
+              <details key={sec.key} className="rounded-lg glass group" open={sec.items.some((it) => (d.checks[it.id] || {}).s === 'repair')}>
                 <summary className="cursor-pointer list-none px-3 py-2 flex items-center justify-between bg-slate-50 rounded-lg">
                   <span className="text-[13px] font-bold text-navy">{sec.title}</span>
                   <span className="text-[11px] text-slate-500">{sec.items.filter((it) => (d.checks[it.id] || {}).s).length}/{sec.items.length} ▾</span>

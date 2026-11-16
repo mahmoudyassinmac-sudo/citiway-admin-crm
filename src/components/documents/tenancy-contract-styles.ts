@@ -1,6 +1,6 @@
 // Scoped styles — rendered only while the tool is mounted.
 const css = `
-  html, body { margin: 0; font-family: 'Inter', sans-serif; background: #F3F5F8; color: #3F3F3F; }
+  html, body { margin: 0; font-family: 'Inter', sans-serif; color: #3F3F3F; }
   .ar { font-family: 'IBM Plex Sans Arabic', sans-serif; direction: rtl; text-align: right; }
   .a4 {
     width: 210mm; height: 297mm; background: #fff; box-sizing: border-box;
@@ -40,8 +40,9 @@ const css = `
   .a4 .text-slate-500 { color: #6B6B6B !important; }
   .a4 .text-slate-400 { color: #8A8A8A !important; }
   .logo { display: block; object-fit: contain; }
-  .field-in { width: 100%; border: 1px solid #D6DEE8; border-radius: 8px; padding: 7px 10px; font-size: 14px; background: #fff; outline: none; transition: border-color .15s, box-shadow .15s; }
-  .field-in:focus { border-color: #7AA3D8; box-shadow: 0 0 0 3px rgba(122,163,216,.25); }
+  .field-in { width: 100%; border: 1px solid #D6DEE8; border-radius: 8px; padding: 7px 10px; font-size: 14px; background: rgba(255,255,255,.72); outline: none; transition: border-color .15s, box-shadow .15s; }
+  .field-in:hover { border-color: rgba(122,163,216,.7); }
+  .field-in:focus { border-color: #7AA3D8; background: #fff; box-shadow: 0 0 0 4px rgba(122,163,216,.22), 0 0 22px -6px rgba(99,102,241,.45); }
 
   @media print {
     @page { size: A4 portrait; margin: 0; }

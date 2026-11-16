@@ -1,16 +1,32 @@
 @import "tailwindcss";
 
-/* Citiway brand tokens (same palette as the original standalone tools) */
+/* ============================================================
+   Citiway — Dubai luxury proptech theme (frosted glass)
+   Printable A4 sheets stay pure white; glass is screen-only.
+   ============================================================ */
+
 @theme {
   --color-brand: #7aa3d8;
   --color-brand-soft: #eaf1fa;
   --color-brand-line: #c9d9ee;
   --color-navy: #1e3553;
   --color-navy-light: #2c4a70;
+  --color-midnight: #0b132b;
   --color-ink: #3f3f3f;
   --font-head: "Montserrat", sans-serif;
   --font-body: "Inter", sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --animate-pop: cw-pop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-fade-in: cw-fade 0.2s ease-out;
+  @keyframes cw-pop {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes cw-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 }
 
 /* Tailwind v4 changed the default border colour; keep v3 behaviour so the ported
@@ -25,14 +41,271 @@
   }
 }
 
-html,
+/* ---------- Ambient mesh canvas ---------- */
+html {
+  background: #eef2f8;
+}
 body {
   margin: 0;
-  background: #f3f5f8;
+  min-height: 100vh;
   color: var(--color-ink);
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  background-color: #eef2f8;
+  background-image:
+    radial-gradient(1100px 620px at 8% -12%, rgb(122 163 216 / 0.38), transparent 62%),
+    radial-gradient(900px 560px at 105% 2%, rgb(99 102 241 / 0.14), transparent 60%),
+    radial-gradient(820px 620px at 60% 115%, rgb(34 211 238 / 0.13), transparent 62%),
+    radial-gradient(700px 480px at -5% 85%, rgb(148 163 184 / 0.22), transparent 60%);
+  background-attachment: fixed;
 }
 
 [dir="rtl"] {
   font-family: "IBM Plex Sans Arabic", "Inter", sans-serif;
+}
+
+::selection {
+  background: rgb(122 163 216 / 0.35);
+}
+
+/* Slim, glassy scrollbars inside panels */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(30 53 83 / 0.25) transparent;
+}
+
+/* ---------- Surfaces ---------- */
+@utility glass {
+  background-color: rgb(255 255 255 / 0.58);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgb(255 255 255 / 0.7);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 12px 32px -14px rgb(15 23 42 / 0.16);
+}
+
+@utility glass-strong {
+  background-color: rgb(255 255 255 / 0.82);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
+  border: 1px solid rgb(255 255 255 / 0.85);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 2px 6px rgb(15 23 42 / 0.05),
+    0 30px 60px -24px rgb(11 19 43 / 0.35);
+}
+
+/* Glass card with a soft gradient "specular" rim — used for feature panels (AI assistant) */
+@utility glass-accent {
+  background:
+    linear-gradient(rgb(255 255 255 / 0.72), rgb(255 255 255 / 0.72)) padding-box,
+    linear-gradient(135deg, #7aa3d8, #6366f1 55%, #22d3ee) border-box;
+  border: 1.5px solid transparent;
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 14px 36px -16px rgb(99 102 241 / 0.35);
+}
+
+@utility glass-dark {
+  background-image:
+    radial-gradient(420px 260px at 0% 0%, rgb(34 211 238 / 0.14), transparent 70%),
+    radial-gradient(380px 300px at 100% 100%, rgb(99 102 241 / 0.18), transparent 70%),
+    linear-gradient(165deg, rgb(11 19 43 / 0.96), rgb(16 28 62 / 0.93));
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  backdrop-filter: blur(24px) saturate(140%);
+  border-color: rgb(255 255 255 / 0.07);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 24px 48px -24px rgb(11 19 43 / 0.7);
+}
+
+/* Top action bar of the document tools */
+@utility cw-topbar {
+  position: relative;
+  background-image:
+    radial-gradient(600px 120px at 15% 0%, rgb(34 211 238 / 0.16), transparent 70%),
+    radial-gradient(600px 140px at 85% 100%, rgb(99 102 241 / 0.2), transparent 70%),
+    linear-gradient(100deg, rgb(11 19 43 / 0.94), rgb(22 37 74 / 0.9));
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: 0 10px 30px -18px rgb(11 19 43 / 0.8);
+  &::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgb(122 163 216 / 0.6), rgb(34 211 238 / 0.5), transparent);
+  }
+}
+
+/* ---------- Motion ---------- */
+@utility lift {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+  will-change: transform;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.85),
+      0 18px 40px -18px rgb(30 53 83 / 0.35),
+      0 0 0 1px rgb(122 163 216 / 0.35);
+  }
+}
+
+/* ---------- Buttons ---------- */
+@utility btn-primary {
+  color: #fff;
+  background-image: linear-gradient(135deg, #1e3553 0%, #2c4a70 55%, #3d64a0 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    0 8px 18px -8px rgb(30 53 83 / 0.6);
+  transition: all 0.2s ease;
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      0 12px 26px -10px rgb(61 100 160 / 0.75),
+      0 0 0 1px rgb(122 163 216 / 0.45),
+      0 0 22px -6px rgb(34 211 238 / 0.45);
+  }
+  &:active:not(:disabled) { transform: translateY(0); }
+}
+
+@utility btn-success {
+  color: #fff;
+  background-image: linear-gradient(135deg, #10b981, #059669 60%, #0d9488);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 8px 20px -8px rgb(16 185 129 / 0.6);
+  transition: all 0.2s ease;
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.25),
+      0 12px 26px -8px rgb(16 185 129 / 0.7),
+      0 0 22px -4px rgb(52 211 153 / 0.55);
+  }
+}
+
+/* Ice-blue brand button — readable on both dark bars and light panels */
+@utility btn-brand {
+  color: var(--color-navy);
+  background-image: linear-gradient(135deg, #e3eefb, #b9d2f1 55%, #9cbfea);
+  border: 1px solid rgb(255 255 255 / 0.6);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    0 8px 18px -10px rgb(122 163 216 / 0.8);
+  transition: all 0.2s ease;
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.9),
+      0 12px 24px -10px rgb(122 163 216 / 0.9),
+      0 0 20px -6px rgb(122 163 216 / 0.8);
+  }
+}
+
+@utility btn-glass {
+  color: #fff;
+  background-color: rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.2);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    background-color: rgb(255 255 255 / 0.16);
+    border-color: rgb(255 255 255 / 0.35);
+    box-shadow: 0 0 20px -8px rgb(122 163 216 / 0.8);
+  }
+}
+
+@utility btn-outline {
+  color: var(--color-navy);
+  background-color: rgb(255 255 255 / 0.55);
+  border: 1px solid rgb(30 53 83 / 0.3);
+  transition: all 0.2s ease;
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    background-color: rgb(255 255 255 / 0.9);
+    border-color: rgb(30 53 83 / 0.5);
+  }
+}
+
+@utility btn-whatsapp {
+  color: #fff;
+  background-image: linear-gradient(135deg, #2bd66b, #1fb85a 55%, #128c7e);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 8px 18px -8px rgb(37 211 102 / 0.6);
+  transition: all 0.2s ease;
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.25),
+      0 12px 24px -8px rgb(37 211 102 / 0.7),
+      0 0 20px -4px rgb(37 211 102 / 0.55);
+  }
+}
+
+/* Refined pill (quick presets, filters) */
+@utility cw-pill {
+  color: var(--color-navy);
+  background-color: rgb(255 255 255 / 0.65);
+  border: 1px solid rgb(201 217 238 / 0.9);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.8);
+  transition: all 0.2s ease;
+  &:hover {
+    color: #fff;
+    transform: translateY(-1px);
+    border-color: transparent;
+    background-image: linear-gradient(135deg, #1e3553, #3d64a0);
+    box-shadow: 0 8px 18px -8px rgb(30 53 83 / 0.6);
+  }
+}
+
+/* ---------- Inputs ---------- */
+@utility field {
+  width: 100%;
+  border-radius: 0.6rem;
+  border: 1px solid rgb(148 163 184 / 0.45);
+  background-color: rgb(255 255 255 / 0.72);
+  font-size: 0.875rem;
+  color: #0f172a;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+  &:hover { border-color: rgb(122 163 216 / 0.7); }
+  &:focus {
+    border-color: #7aa3d8;
+    background-color: #fff;
+    box-shadow:
+      0 0 0 4px rgb(122 163 216 / 0.22),
+      0 0 22px -6px rgb(99 102 241 / 0.45);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    background-image: none !important;
+  }
 }

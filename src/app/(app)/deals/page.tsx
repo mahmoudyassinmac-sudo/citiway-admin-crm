@@ -25,7 +25,7 @@ export default async function DealsPage({ searchParams }: { searchParams: Promis
   const docs = session.permissions.modules.finance ? session.permissions.finance_docs : null;
   const canWrite = session.role !== "agent";
   const tabCls = (on: boolean) =>
-    `rounded-lg px-4 py-2 text-sm font-semibold ${on ? "bg-navy text-white" : "bg-white text-navy ring-1 ring-slate-200 hover:ring-brand"}`;
+    `rounded-lg px-4 py-2 text-sm font-semibold ${on ? "btn-primary text-white" : "glass text-navy transition-all duration-200 hover:-translate-y-0.5"}`;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">

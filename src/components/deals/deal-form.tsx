@@ -145,7 +145,7 @@ export function DealForm({
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">Cancel</button>
-          <button disabled={busy} className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-light disabled:opacity-50">{busy ? "Saving…" : "Save deal"}</button>
+          <button disabled={busy} className="rounded-lg btn-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Saving…" : "Save deal"}</button>
         </div>
       </form>
     </Modal>

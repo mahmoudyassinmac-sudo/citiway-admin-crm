@@ -422,7 +422,7 @@ function Field({ label, children, hint }) {
 function Input(props) { return <input {...props} className={'field-in ' + (props.className || '')} />; }
 function Card({ title, right, children, className = '' }) {
   return (
-    <section className={'bg-white rounded-xl border border-slate-200 shadow-sm p-4 ' + className}>
+    <section className={'glass rounded-xl p-4 ' + className}>
       <div className="flex items-center justify-between mb-3 gap-2"><h3 className="font-head font-bold text-[13px] uppercase tracking-wider text-navy flex items-center gap-2"><span className="w-1 h-4 rounded bg-brand inline-block" />{title}</h3>{right}</div>
       <div className="space-y-3">{children}</div>
     </section>
@@ -669,18 +669,17 @@ function App({ company = {}, developers = [], agents = [], clients = [], initial
   const mailUrl = `mailto:${encodeURIComponent(mgrEmail)}?subject=${encodeURIComponent(`For Signature: ${d.subject || 'Letter'} — ${d.ref}`)}&body=${encodeURIComponent(msg)}`;
   const ActionBar = ({ compact }) => (
     <div className={`flex gap-2 ${compact ? '' : 'flex-col'}`}>
-      <button type="button" onClick={issueAndPrint} title="Records the letter in the CRM, then opens print / PDF" className={`bg-emerald-500 hover:bg-emerald-400 transition text-white font-semibold text-sm px-3 py-2 rounded-lg whitespace-nowrap ${compact ? '' : 'w-full'}`}>① Save &amp; Issue</button>
-      <button type="button" onClick={doPrint} className={`bg-brand hover:bg-white transition text-navy font-semibold text-sm px-3 py-2 rounded-lg whitespace-nowrap ${compact ? '' : 'w-full border border-brand'}`}>Print draft</button>
-      <a href={waUrl} target="_blank" rel="noopener" className={`text-center bg-[#25D366] hover:brightness-95 text-white font-semibold text-sm px-3 py-2 rounded-lg whitespace-nowrap ${compact ? '' : 'w-full'}`}>② Send via WhatsApp</a>
-      <a href={mailUrl} className={`text-center font-semibold text-sm px-3 py-2 rounded-lg whitespace-nowrap ${compact ? 'border border-blue-200/60 text-white hover:bg-white/10' : 'w-full border border-navy text-navy hover:bg-brand-soft'}`}>②B Send via Email</a>
+      <button type="button" onClick={issueAndPrint} title="Records the letter in the CRM, then opens print / PDF" className={`btn-success text-white font-semibold text-sm px-3 py-2 rounded-lg whitespace-nowrap ${compact ? '' : 'w-full'}`}>① Save &amp; Issue</button>
+      <button type="button" onClick={doPrint} className={`btn-brand text-navy font-semibold text-sm px-3 py-2 rounded-lg whitespace-nowrap ${compact ? '' : 'w-full'}`}>Print draft</button>
+      <a href={waUrl} target="_blank" rel="noopener" className={`text-center btn-whatsapp text-white font-semibold text-sm px-3 py-2 rounded-lg whitespace-nowrap ${compact ? '' : 'w-full'}`}>② Send via WhatsApp</a>
+      <a href={mailUrl} className={`text-center font-semibold text-sm px-3 py-2 rounded-lg whitespace-nowrap ${compact ? 'btn-glass text-white' : 'w-full btn-outline text-navy'}`}>②B Send via Email</a>
     </div>
   );
 
   return (
     <div className="min-h-screen">
-      <header className="no-print bg-navy text-white">
+      <header className="no-print cw-topbar text-white">
         <div className="max-w-[1500px] mx-auto px-5 py-3 flex items-center gap-4 flex-wrap">
-          <div className="bg-white rounded-md px-2 py-1"><img src={LOGO} alt="Citiway" style={{ height: 28, width: 'auto', display: 'block' }} /></div>
           <div>
             <div className="font-head font-bold tracking-wide">Letterhead &amp; Document Generator</div>
             <div className="text-[12px] text-blue-100">Template #10 · AI-assisted · EN / AR · 1-page A4</div>
@@ -694,7 +693,7 @@ function App({ company = {}, developers = [], agents = [], clients = [], initial
         {/* ---------------- LEFT ---------------- */}
         <div className="no-print space-y-4 lg:max-h-[calc(100vh-110px)] lg:overflow-y-auto lg:pr-1">
           {/* AI box */}
-          <section className="rounded-xl border-2 border-navy bg-brand-soft p-4 shadow-sm space-y-3">
+          <section className="rounded-xl glass-accent p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-head font-bold text-[14px] uppercase tracking-wider text-navy">✨ AI Document Assistant</h3>
               <span className="text-[11px] text-slate-600">English · العربية</span>
@@ -702,15 +701,15 @@ function App({ company = {}, developers = [], agents = [], clients = [], initial
             <textarea rows={3} dir="auto" className="field-in" value={prompt} onChange={(e) => setPrompt(e.target.value)}
               placeholder="Describe the document you need in English or Arabic (e.g., 'Salary certificate for Ahmed Ali, Property Consultant, AED 12,000/month, addressed to Emirates NBD' or 'NOC for driving license')..." />
             <div className="grid grid-cols-2 gap-2">
-              <button type="button" onClick={smartDraft} className="bg-navy hover:bg-navy-light text-white font-semibold text-sm py-2.5 rounded-lg">⚡ Smart Draft <span className="font-normal opacity-75 text-[11px]">(no key)</span></button>
-              <button type="button" onClick={aiDraft} disabled={busy} className="bg-white border-2 border-navy text-navy font-semibold text-sm py-2.5 rounded-lg hover:bg-white/70 disabled:opacity-60">{busy ? 'Generating…' : 'Generate with AI ✨'}</button>
+              <button type="button" onClick={smartDraft} className="btn-primary text-white font-semibold text-sm py-2.5 rounded-lg">⚡ Smart Draft <span className="font-normal opacity-75 text-[11px]">(no key)</span></button>
+              <button type="button" onClick={aiDraft} disabled={busy} className="btn-outline font-semibold text-sm py-2.5 rounded-lg disabled:opacity-60">{busy ? 'Generating…' : 'Generate with AI ✨'}</button>
             </div>
             {note && <div className={`text-[12px] rounded-md p-2 ${note.kind === 'ok' ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : note.kind === 'err' ? 'bg-red-50 border border-red-200 text-red-800' : 'bg-amber-50 border border-amber-200 text-amber-800'}`}>{note.text}</div>}
             <div>
               <div className="text-[11px] font-bold text-navy uppercase tracking-wider mb-1.5">Quick presets</div>
               <div className="flex flex-wrap gap-1.5">
                 {PRESETS.map(([k, l]) => <button key={k} type="button" onClick={() => { const pf = k === 'blank' ? {} : { ...parsePrompt(prompt), ...(selDev ? { dev: selDev.developer_name } : {}), ...(selAgent ? { agent: selAgent.full_name, brn: selAgent.rera_brn || '' } : {}) }; fRef.current = pf; setTpl(k); upd(draft(k, k === 'blank' ? {} : { ...pf, orn: orn.trim() })); setNote({ kind: 'ok', text: `${l} loaded${prompt.trim() && k !== 'blank' ? ' using details from your description' : ''}. Fill any [placeholders].` }); }}
-                  className="text-[12px] font-semibold px-2.5 py-1.5 rounded-full bg-white border border-brand-line text-navy hover:bg-navy hover:text-white transition">{l}</button>)}
+                  className="text-[12px] font-semibold px-2.5 py-1.5 rounded-full cw-pill">{l}</button>)}
               </div>
             </div>
             <div className="text-[11px] text-slate-600 bg-white border border-slate-200 rounded-lg px-3 py-2">AI Draft runs securely on the Citiway server (Claude Sonnet 4.6) — no API key needed in the browser. Smart Draft works fully offline.</div>

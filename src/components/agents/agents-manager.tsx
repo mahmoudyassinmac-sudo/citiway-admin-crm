@@ -76,7 +76,7 @@ function AgentForm({ agent, onClose, onSaved }: { agent: Agent | null; onClose: 
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">Cancel</button>
-          <button disabled={busy} className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-light disabled:opacity-50">{busy ? "Saving…" : "Save"}</button>
+          <button disabled={busy} className="rounded-lg btn-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Saving…" : "Save"}</button>
         </div>
       </form>
     </Modal>
@@ -98,12 +98,12 @@ export function AgentsManager({ agents, canEdit }: { agents: Agent[]; canEdit: b
     <>
       {canEdit && (
         <div className="mb-4 flex justify-end">
-          <button onClick={() => setEditing("new")} className="flex items-center gap-2 rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-light">
+          <button onClick={() => setEditing("new")} className="flex items-center gap-2 rounded-lg btn-primary px-4 py-2 text-sm font-semibold text-white">
             <Plus className="h-4 w-4" /> Add agent
           </button>
         </div>
       )}
-      <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="overflow-x-auto rounded-2xl glass">
         <table className="w-full min-w-[820px] text-sm">
           <thead>
             <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wider text-slate-500">
@@ -121,7 +121,7 @@ export function AgentsManager({ agents, canEdit }: { agents: Agent[]; canEdit: b
               <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">No agents yet.</td></tr>
             )}
             {agents.map((a) => (
-              <tr key={a.id} className={`border-b border-slate-50 last:border-0 ${a.is_active ? "" : "opacity-60"}`}>
+              <tr key={a.id} className={`border-b border-slate-200/40 transition-colors duration-150 last:border-0 hover:bg-white/50 ${a.is_active ? "" : "opacity-60"}`}>
                 <td className="px-4 py-3 font-semibold text-navy">
                   {a.full_name}
                   {!a.is_active && <span className="ml-2 text-xs font-normal text-slate-400">inactive</span>}

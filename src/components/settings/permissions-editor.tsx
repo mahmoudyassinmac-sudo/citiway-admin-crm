@@ -14,7 +14,7 @@ export const ROLE_LABEL: Record<Role, string> = { admin: "Admin", accountant: "A
 
 export function RoleBadge({ role }: { role: Role }) {
   const cls =
-    role === "admin" ? "bg-navy text-white" : role === "accountant" ? "bg-brand-soft text-navy" : "bg-emerald-50 text-emerald-700";
+    role === "admin" ? "bg-gradient-to-r from-navy to-[#3d64a0] text-white shadow-[0_4px_12px_-4px_rgba(30,53,83,0.6)]" : role === "accountant" ? "bg-brand-soft text-navy" : "bg-emerald-50 text-emerald-700";
   return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}>{ROLE_LABEL[role]}</span>;
 }
 
@@ -37,7 +37,7 @@ export function RolePicker({ role, onChange }: { role: Role; onChange: (r: Role)
       <select
         value={role}
         onChange={(e) => onChange(e.target.value as Role)}
-        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+        className="field px-3 py-2"
       >
         {ROLES.map((r) => (
           <option key={r} value={r}>{ROLE_LABEL[r]}</option>

@@ -192,7 +192,7 @@ function DeveloperForm({
           </button>
           <button
             disabled={busy}
-            className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-light disabled:opacity-50"
+            className="rounded-lg btn-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
             {busy ? "Saving…" : "Save"}
           </button>
@@ -359,8 +359,8 @@ export function DevelopersManager({
               onClick={() => setFilter(c.key)}
               className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset transition ${
                 filter === c.key
-                  ? "bg-navy text-white ring-navy"
-                  : `bg-white ring-slate-200 hover:ring-brand ${c.cls}`
+                  ? "btn-primary text-white ring-transparent"
+                  : `glass ring-transparent hover:-translate-y-0.5 ${c.cls}`
               }`}
             >
               {c.label} · {counts[c.key]}
@@ -370,14 +370,14 @@ export function DevelopersManager({
         {canEdit && enabled && (
           <button
             onClick={() => setEditing("new")}
-            className="flex items-center gap-2 rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-light"
+            className="flex items-center gap-2 rounded-lg btn-primary px-4 py-2 text-sm font-semibold text-white"
           >
             <Plus className="h-4 w-4" /> Add developer
           </button>
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="overflow-x-auto rounded-2xl glass">
         <table className="w-full min-w-[820px] text-sm">
           <thead>
             <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wider text-slate-500">
@@ -406,7 +406,7 @@ export function DevelopersManager({
               return (
                 <tr
                   key={d.id}
-                  className={`border-b border-slate-50 last:border-0 ${
+                  className={`border-b border-slate-200/40 transition-colors duration-150 last:border-0 hover:bg-white/50 ${
                     status === "expired" ? "bg-red-50/40" : status === "expiring" ? "bg-amber-50/40" : ""
                   }`}
                 >

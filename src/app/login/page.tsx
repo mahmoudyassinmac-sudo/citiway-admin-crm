@@ -27,7 +27,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <form
         onSubmit={onSubmit}
-        className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl shadow-navy/10"
+        className="w-full max-w-sm animate-pop rounded-2xl glass-strong p-8"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/assets/citiway-logo.png" alt="Citiway Real Estate" className="mb-6 h-12 w-auto" />
@@ -48,7 +48,7 @@ export default function LoginPage() {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mb-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+          className="field mb-4 px-3 py-2"
         />
         <label className="mb-1 block text-xs font-semibold text-navy">Password</label>
         <input
@@ -57,12 +57,12 @@ export default function LoginPage() {
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mb-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+          className="field mb-4 px-3 py-2"
         />
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
         <button
           disabled={busy || !configured}
-          className="w-full rounded-lg bg-navy py-2.5 text-sm font-semibold text-white transition hover:bg-navy-light disabled:opacity-50"
+          className="w-full rounded-lg btn-primary py-2.5 text-sm font-semibold text-white disabled:opacity-50"
         >
           {busy ? "Signing in…" : "Sign in"}
         </button>

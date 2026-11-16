@@ -18,16 +18,16 @@ export function DealsManager({ deals, lookups, canEdit, canDelete, canInvoice }:
     const { error } = await createClient().from("deals").delete().eq("id", d.id);
     if (error) alert(error.message); else router.refresh();
   }
-  const link = "rounded-md px-2 py-1 text-[11px] font-semibold text-navy ring-1 ring-brand-line hover:bg-brand-soft";
+  const link = "rounded-md px-2 py-1 text-[11px] font-semibold text-navy bg-white/50 ring-1 ring-brand-line transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90";
 
   return (
     <>
       {canEdit && (
         <div className="mb-4 flex justify-end">
-          <button onClick={() => setEditing("new")} className="flex items-center gap-2 rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-light"><Plus className="h-4 w-4" /> New deal</button>
+          <button onClick={() => setEditing("new")} className="flex items-center gap-2 rounded-lg btn-primary px-4 py-2 text-sm font-semibold text-white"><Plus className="h-4 w-4" /> New deal</button>
         </div>
       )}
-      <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="overflow-x-auto rounded-2xl glass">
         <table className="w-full min-w-[900px] text-sm">
           <thead>
             <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wider text-slate-500">
@@ -38,7 +38,7 @@ export function DealsManager({ deals, lookups, canEdit, canDelete, canInvoice }:
           <tbody>
             {deals.length === 0 && <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">No deals yet.</td></tr>}
             {deals.map((d) => (
-              <tr key={d.id} className="border-b border-slate-50 last:border-0">
+              <tr key={d.id} className="border-b border-slate-200/40 transition-colors duration-150 last:border-0 hover:bg-white/50">
                 <td className="px-4 py-3"><div className="font-semibold text-navy">{d.project_name ?? "—"}{d.unit_no ? ` · ${d.unit_no}` : ""}</div><div className="text-xs text-slate-400">{d.developer?.developer_name ?? ""} · SPA {formatDate(d.spa_date)}</div></td>
                 <td className="px-4 py-3">{d.client?.full_name ?? "—"}</td>
                 <td className="px-4 py-3">{d.agent?.full_name ?? "—"}</td>

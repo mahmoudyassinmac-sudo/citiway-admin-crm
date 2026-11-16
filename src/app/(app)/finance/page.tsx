@@ -57,7 +57,7 @@ export default async function FinancePage() {
                   <Link
                     key={t.slug}
                     href={`/finance/${t.slug}`}
-                    className="group rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:ring-brand"
+                    className="group rounded-xl glass lift p-4"
                   >
                     <Icon className="mb-3 h-5 w-5 text-brand" />
                     <div className="font-semibold text-navy group-hover:underline">{t.title}</div>

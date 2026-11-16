@@ -32,7 +32,7 @@ export function CompanyForm({ initial }: { initial: CompanyInput }) {
   }
 
   return (
-    <form onSubmit={submit} className="max-w-2xl rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+    <form onSubmit={submit} className="max-w-2xl rounded-2xl glass p-6">
       <div className="grid gap-x-4 sm:grid-cols-2">
         <Field label="Company name"><input className={inputCls} value={f.company_name} onChange={set("company_name")} /></Field>
         <Field label="Trade license no."><input className={inputCls} value={f.trade_license} onChange={set("trade_license")} /></Field>
@@ -50,7 +50,7 @@ export function CompanyForm({ initial }: { initial: CompanyInput }) {
             onClick={sendTest}
             disabled={testing || dirty || !f.admin_alert_email.trim()}
             title={dirty ? "Save the new address first" : "Send a sample confirmation email"}
-            className="whitespace-nowrap rounded-lg px-4 text-sm font-semibold text-navy ring-1 ring-brand-line hover:bg-brand-soft disabled:opacity-40"
+            className="whitespace-nowrap rounded-lg px-4 text-sm font-semibold text-navy bg-white/50 ring-1 ring-brand-line transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90 disabled:opacity-40"
           >
             {testing ? "Sending…" : "Send Test Email"}
           </button>
@@ -59,7 +59,7 @@ export function CompanyForm({ initial }: { initial: CompanyInput }) {
         {testMsg && <span role="status" className={`mt-1 block text-[12px] ${testMsg.ok ? "text-emerald-700" : "text-red-600"}`}>{testMsg.text}</span>}
       </Field>
       {msg && <p role="status" className={`mb-3 text-sm ${msg.ok ? "text-emerald-700" : "text-red-600"}`}>{msg.text}</p>}
-      <button disabled={busy} className="rounded-lg bg-navy px-5 py-2.5 text-sm font-semibold text-white hover:bg-navy-light disabled:opacity-50">{busy ? "Saving…" : "Save settings"}</button>
+      <button disabled={busy} className="rounded-lg btn-primary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Saving…" : "Save settings"}</button>
     </form>
   );
 }

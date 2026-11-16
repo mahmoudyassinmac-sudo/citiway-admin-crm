@@ -69,7 +69,7 @@ function AddUserModal({ agents, onClose, onDone }: { agents: AgentOption[]; onCl
         <Field label="Password" hint="At least 8 characters. Share it securely; the user can't see it again.">
           <div className="flex gap-2">
             <input type="text" className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
-            <button type="button" onClick={() => setPassword(randomPassword())} className="whitespace-nowrap rounded-lg px-3 text-xs font-semibold text-navy ring-1 ring-brand-line hover:bg-brand-soft">Generate</button>
+            <button type="button" onClick={() => setPassword(randomPassword())} className="whitespace-nowrap rounded-lg px-3 text-xs font-semibold text-navy bg-white/50 ring-1 ring-brand-line transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90">Generate</button>
           </div>
         </Field>
         <RolePicker role={role} onChange={(r) => { setRole(r); setPerms(presetFor(r)); }} />
@@ -86,7 +86,7 @@ function AddUserModal({ agents, onClose, onDone }: { agents: AgentOption[]; onCl
         {error && <p role="alert" className="mb-3 text-sm text-red-600">{error}</p>}
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">Cancel</button>
-          <button disabled={busy} className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-light disabled:opacity-50">{busy ? "Creating…" : "Create user"}</button>
+          <button disabled={busy} className="rounded-lg btn-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Creating…" : "Create user"}</button>
         </div>
       </form>
     </Modal>
@@ -146,8 +146,8 @@ function EditUserModal({ user, agents, isSelf, onClose, onDone }: { user: UserRo
           <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-navy"><KeyRound className="h-3.5 w-3.5" /> Reset password</div>
           <div className="flex gap-2">
             <input type="text" className={inputCls} placeholder="New password (min 8)" value={newPw} onChange={(e) => setNewPw(e.target.value)} autoComplete="new-password" />
-            <button type="button" onClick={() => setNewPw(randomPassword())} className="whitespace-nowrap rounded-lg px-3 text-xs font-semibold text-navy ring-1 ring-brand-line hover:bg-brand-soft">Generate</button>
-            <button type="button" onClick={reset} disabled={newPw.length < 8} className="whitespace-nowrap rounded-lg bg-navy px-3 text-xs font-semibold text-white disabled:opacity-40">Set</button>
+            <button type="button" onClick={() => setNewPw(randomPassword())} className="whitespace-nowrap rounded-lg px-3 text-xs font-semibold text-navy bg-white/50 ring-1 ring-brand-line transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90">Generate</button>
+            <button type="button" onClick={reset} disabled={newPw.length < 8} className="whitespace-nowrap rounded-lg btn-primary px-3 text-xs font-semibold text-white disabled:opacity-40">Set</button>
           </div>
         </div>
 
@@ -159,7 +159,7 @@ function EditUserModal({ user, agents, isSelf, onClose, onDone }: { user: UserRo
           ) : <span />}
           <div className="flex gap-2">
             <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">Cancel</button>
-            <button disabled={busy} className="rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-light disabled:opacity-50">{busy ? "Saving…" : "Save changes"}</button>
+            <button disabled={busy} className="rounded-lg btn-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Saving…" : "Save changes"}</button>
           </div>
         </div>
       </form>
@@ -179,9 +179,9 @@ export function UsersManager({ users, agents, currentUserId }: { users: UserRow[
     <>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm text-slate-500">{users.length} user(s). Changes apply on the user&apos;s next page load.</p>
-        <button onClick={() => setAdding(true)} className="flex items-center gap-2 rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-light"><Plus className="h-4 w-4" /> Add new user</button>
+        <button onClick={() => setAdding(true)} className="flex items-center gap-2 rounded-lg btn-primary px-4 py-2 text-sm font-semibold text-white"><Plus className="h-4 w-4" /> Add new user</button>
       </div>
-      <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="overflow-x-auto rounded-2xl glass">
         <table className="w-full min-w-[820px] text-sm">
           <thead>
             <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wider text-slate-500">
@@ -205,7 +205,7 @@ export function UsersManager({ users, agents, currentUserId }: { users: UserRow[
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button onClick={() => setEditing(u)} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-navy ring-1 ring-brand-line hover:bg-brand-soft"><Pencil className="h-3.5 w-3.5" /> Edit permissions</button>
+                  <button onClick={() => setEditing(u)} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-navy bg-white/50 ring-1 ring-brand-line transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90"><Pencil className="h-3.5 w-3.5" /> Edit permissions</button>
                 </td>
               </tr>
             ))}

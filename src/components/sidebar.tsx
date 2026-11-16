@@ -54,16 +54,16 @@ export function Sidebar({
   }
 
   return (
-    <aside className="no-print flex w-full shrink-0 flex-col bg-navy text-white md:min-h-screen md:w-60">
-      <div className="flex items-center gap-3 px-5 py-5">
+    <aside className="no-print glass-dark z-20 flex w-full shrink-0 flex-col border-b text-white md:sticky md:top-0 md:h-screen md:w-64 md:border-b-0 md:border-r">
+      <div className="px-5 pb-4 pt-6">
+        {/* Light variant of the logo: transparent background, white wordmark + ice-blue pin */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/citiway-logo.png" alt="Citiway" className="h-8 w-auto rounded bg-white p-1" />
-        <div className="font-head text-sm font-bold leading-tight tracking-wide">
-          Back-Office
-          <div className="text-[10px] font-medium text-brand">Dubai · UAE</div>
+        <img src="/assets/citiway-logo-light.png" alt="Citiway Real Estate" className="h-9 w-auto drop-shadow-[0_2px_12px_rgba(122,163,216,0.35)]" />
+        <div className="mt-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200/70">
+          Back-Office · Dubai
         </div>
       </div>
-      <nav className="flex flex-row gap-1 overflow-x-auto px-3 pb-3 md:flex-1 md:flex-col md:overflow-visible">
+      <nav className="flex flex-row gap-1 overflow-x-auto px-3 pb-3 md:flex-1 md:flex-col md:overflow-y-auto">
         {NAV.filter((n) =>
           n.adminOnly ? role === "admin" : n.module ? role === "admin" || modules[n.module] : true,
         ).map((n) => {
@@ -73,23 +73,30 @@ export function Sidebar({
             <Link
               key={n.href}
               href={n.href}
-              className={`flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                active ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
+              aria-current={active ? "page" : undefined}
+              className={`group relative flex items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-gradient-to-b before:from-cyan-300 before:to-indigo-400 before:shadow-[0_0_12px_rgba(103,232,249,0.8)] before:transition-transform before:duration-300 ${
+                active
+                  ? "bg-white/[0.09] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/10 before:scale-y-100"
+                  : "text-white/65 before:scale-y-0 hover:translate-x-0.5 hover:bg-white/[0.06] hover:text-white"
               }`}
             >
-              <Icon className="h-4 w-4" />
+              <Icon
+                className={`h-4 w-4 transition-colors duration-200 ${
+                  active ? "text-cyan-300 drop-shadow-[0_0_6px_rgba(103,232,249,0.7)]" : "text-white/55 group-hover:text-cyan-200"
+                }`}
+              />
               {n.label}
             </Link>
           );
         })}
       </nav>
-      <div className="hidden border-t border-white/10 px-5 py-4 text-xs md:block">
+      <div className="mx-3 mb-4 hidden rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-xs md:block">
         <div className="truncate font-semibold">{name}</div>
-        <div className="mb-3 capitalize text-white/60">{configured ? role : "setup required"}</div>
+        <div className="mb-2.5 capitalize text-white/55">{configured ? role : "setup required"}</div>
         {configured && (
           <button
             onClick={signOut}
-            className="flex items-center gap-2 text-white/70 hover:text-white"
+            className="flex items-center gap-2 text-white/65 transition-colors duration-200 hover:text-cyan-200"
           >
             <LogOut className="h-3.5 w-3.5" /> Sign out
           </button>

@@ -1,6 +1,6 @@
 // Scoped styles — rendered only while the tool is mounted.
 const css = `
-  html, body { margin: 0; font-family: 'Inter', sans-serif; background: #F3F5F8; color: #3F3F3F; }
+  html, body { margin: 0; font-family: 'Inter', sans-serif; color: #3F3F3F; }
   .a4 {
     width: 210mm; height: 297mm; background: #fff; box-sizing: border-box;
     padding: 12mm 14mm 9mm; display: flex; flex-direction: column; overflow: hidden;
@@ -16,8 +16,9 @@ const css = `
   .num { font-variant-numeric: tabular-nums; }
   .sec { display: flex; align-items: center; gap: 2.5mm; font-family: 'Montserrat', sans-serif; font-weight: 700; color: #1E3553; font-size: 10.5pt; letter-spacing: .04em; text-transform: uppercase; margin: 5mm 0 2.2mm; }
   .sec::before { content: ''; width: 1.2mm; height: 4.2mm; background: #7AA3D8; border-radius: 1mm; }
-  .field-in { width: 100%; border: 1px solid #D6DEE8; border-radius: 8px; padding: 8px 10px; font-size: 14px; background: #fff; outline: none; transition: border-color .15s, box-shadow .15s; }
-  .field-in:focus { border-color: #7AA3D8; box-shadow: 0 0 0 3px rgba(122,163,216,.25); }
+  .field-in { width: 100%; border: 1px solid #D6DEE8; border-radius: 8px; padding: 8px 10px; font-size: 14px; background: rgba(255,255,255,.72); outline: none; transition: border-color .15s, box-shadow .15s; }
+  .field-in:hover { border-color: rgba(122,163,216,.7); }
+  .field-in:focus { border-color: #7AA3D8; background: #fff; box-shadow: 0 0 0 4px rgba(122,163,216,.22), 0 0 22px -6px rgba(99,102,241,.45); }
 
   .pg { width: 210mm; height: 297mm; background: #fff; position: relative; overflow: hidden; box-sizing: border-box;
         -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #3F3F3F; font-family: 'Inter', sans-serif; }

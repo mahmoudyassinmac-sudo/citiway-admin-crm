@@ -62,7 +62,7 @@ function Field({ label, children, hint }) {
 function Input(props) { return <input {...props} className="field-in" />; }
 function Card({ title, children }) {
   return (
-    <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+    <section className="glass rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-head font-bold text-[13px] uppercase tracking-wider text-navy flex items-center gap-2">
           <span className="w-1 h-4 rounded bg-brand inline-block" />{title}
@@ -314,15 +314,14 @@ function App({ company = {} }) {
 
   return (
     <div className="min-h-screen">
-      <header className="no-print bg-navy text-white">
+      <header className="no-print cw-topbar text-white">
         <div className="max-w-[1500px] mx-auto px-5 py-3 flex items-center gap-4">
-          <div className="bg-white rounded-md px-2 py-1"><img src={LOGO} alt="Citiway" style={{ height: 28, width: 'auto', display: 'block' }} /></div>
           <div>
             <div className="font-head font-bold tracking-wide">ADNOC Distribution Tax Invoice</div>
             <div className="text-[12px] text-blue-100">Template #6 · ADNOC format (CW-AD-S-2610006) · SAR billing</div>
           </div>
-          {canIssue && <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto bg-emerald-500 hover:bg-emerald-400 transition text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>}
-          <button onClick={doPrint} title="Print a draft without recording it" className="bg-brand hover:bg-white hover:text-navy transition text-navy font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">
+          {canIssue && <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto btn-success text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>}
+          <button onClick={doPrint} title="Print a draft without recording it" className="btn-brand text-navy font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">
             Print / Save as PDF
           </button>
         </div>

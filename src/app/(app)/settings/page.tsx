@@ -14,7 +14,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const tab = (await searchParams).tab === "company" ? "company" : "users";
 
   const tabCls = (on: boolean) =>
-    `rounded-lg px-4 py-2 text-sm font-semibold ${on ? "bg-navy text-white" : "bg-white text-navy ring-1 ring-slate-200 hover:ring-brand"}`;
+    `rounded-lg px-4 py-2 text-sm font-semibold ${on ? "btn-primary text-white" : "glass text-navy transition-all duration-200 hover:-translate-y-0.5"}`;
 
   let body: React.ReactNode;
   if (!session.configured || !process.env.SUPABASE_SERVICE_ROLE_KEY) {

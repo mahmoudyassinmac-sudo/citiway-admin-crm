@@ -1,6 +1,32 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "citiway-crm-dev", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--", "-p", "3100"], "port": 3100 }
+    {
+      "name": "citiway-crm-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3100"
+      ],
+      "port": 3100
+    },
+    {
+      "name": "citiway-ui-preview",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "NEXT_PUBLIC_SUPABASE_URL=",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY=",
+        "npm",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3101"
+      ],
+      "port": 3101
+    }
   ]
 }

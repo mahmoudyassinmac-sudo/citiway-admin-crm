@@ -17,7 +17,7 @@ const aed = (n: number) => `AED ${n.toLocaleString("en-US", { maximumFractionDig
 
 function Card({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <section className="rounded-2xl glass lift p-5">
       <h2 className="mb-3 flex items-center gap-2 font-head text-sm font-bold uppercase tracking-wider text-navy">
         {icon}
         {title}
@@ -98,7 +98,7 @@ export default async function Dashboard() {
           { label: "BRN cards expiring ≤ 30d", value: brns.length, tone: brns.length ? "text-amber-700" : "text-emerald-700", sub: "active agents" },
           { label: "Letters issued (recent)", value: letters.length, tone: "text-navy", sub: "last 5 shown below" },
         ].map((k) => (
-          <div key={k.label} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <div key={k.label} className="rounded-2xl glass lift p-5">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{k.label}</div>
             <div className={`mt-2 font-head text-2xl font-bold ${k.tone}`}>{k.value}</div>
             <div className="text-xs text-slate-400">{k.sub}</div>
