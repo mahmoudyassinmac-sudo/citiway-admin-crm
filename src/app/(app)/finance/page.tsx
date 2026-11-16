@@ -15,15 +15,15 @@ export default async function FinancePage() {
   const tools = DOCUMENT_TOOLS.filter((t) => t.roles.includes(session.role));
   if (tools.length === 0) redirect("/");
 
-  let deals: Deal[] = [];
-  const lookups = await getLookups();
-  if (session.configured && session.role !== "agent") {
+  const loadDeals = async (): Promise<Deal[]> => {
+    if (!session.configured || session.role === "agent") return [];
     const { data } = await (await createClient())
       .from("deals")
       .select(DEAL_SELECT)
       .order("created_at", { ascending: false });
-    deals = (data ?? []) as Deal[];
-  }
+    return (data ?? []) as Deal[];
+  };
+  const [lookups, deals] = await Promise.all([getLookups(), loadDeals()]);
 
   const groups = ["Finance", "Deals & Marketing"] as const;
 

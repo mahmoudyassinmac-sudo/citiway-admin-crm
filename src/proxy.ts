@@ -31,9 +31,9 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Local JWT verification; refreshes the session cookie when the token is near expiry.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   if (!user && !isLogin) {
     const redirect = request.nextUrl.clone();

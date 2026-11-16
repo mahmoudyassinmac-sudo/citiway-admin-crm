@@ -1,8 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
-/** Server-side Supabase client bound to the current user's session cookies. */
-export async function createClient() {
+/** Server-side Supabase client bound to the current user's session cookies (memoised per request). */
+export const createClient = cache(async () => {
   const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,4 +25,4 @@ export async function createClient() {
       },
     },
   );
-}
+});

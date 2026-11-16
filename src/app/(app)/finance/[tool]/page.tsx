@@ -29,18 +29,16 @@ export default async function DocumentToolPage({
   const sp = await searchParams;
   const session = await getSession();
   if (!tool.roles.includes(session.role)) redirect("/");
-  const company = await getCompany();
-  const { clients, developers } = await getLookups();
-
-  let deal: unknown = null;
-  if (sp.deal && session.configured && session.role !== "agent" && /^[0-9a-f-]{36}$/i.test(sp.deal)) {
+  const loadDeal = async () => {
+    if (!sp.deal || !session.configured || session.role === "agent" || !/^[0-9a-f-]{36}$/i.test(sp.deal)) return null;
     const { data } = await (await createClient())
       .from("deals")
       .select("project_name, unit_no, sale_price_aed, commission_pct")
       .eq("id", sp.deal)
       .maybeSingle();
-    deal = data;
-  }
+    return data;
+  };
+  const [company, { clients, developers }, deal] = await Promise.all([getCompany(), getLookups(), loadDeal()]);
 
   const { Component } = tool;
   return (

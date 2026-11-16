@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,28 +24,29 @@ export function supabaseConfigured(): boolean {
  * blocks this in production) an "admin" preview session is returned so the UI can
  * render the setup notice instead of crashing.
  */
-export async function getSession(): Promise<Session> {
+/** Memoised per request: layout and page share one auth + profile lookup. */
+export const getSession = cache(async (): Promise<Session> => {
   if (!supabaseConfigured()) {
     // Local preview only (the proxy blocks unconfigured production): admin so every tool can be inspected.
     return { configured: false, userId: null, email: null, fullName: null, role: "admin" };
   }
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  // getClaims() verifies the JWT locally (cached JWKS) — no Auth-server round trip per navigation.
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims?.sub) redirect("/login");
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name, role")
-    .eq("id", user.id)
+    .eq("id", claims.sub)
     .maybeSingle();
 
   return {
     configured: true,
-    userId: user.id,
-    email: user.email ?? null,
+    userId: claims.sub,
+    email: (claims.email as string | undefined) ?? null,
     fullName: profile?.full_name ?? null,
     role: (profile?.role as AppRole | undefined) ?? "agent",
   };
-}
+});

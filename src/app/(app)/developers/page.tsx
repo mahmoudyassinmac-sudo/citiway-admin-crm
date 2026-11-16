@@ -1,24 +1,21 @@
 import { DevelopersManager } from "@/components/developers/developers-manager";
-import { getSession } from "@/lib/auth";
+import { getSession, supabaseConfigured } from "@/lib/auth";
 import type { Developer } from "@/lib/developers";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Developers — Citiway CRM" };
 
 export default async function DevelopersPage() {
-  const session = await getSession();
-  let developers: Developer[] = [];
-  let loadError = "";
-
-  if (session.configured) {
-    const supabase = await createClient();
-    const { data, error } = await supabase
+  // Auth (shared with the layout via cache()) and data load in parallel; RLS enforces access.
+  const load = async () => {
+    if (!supabaseConfigured()) return { rows: [] as Developer[], error: "" };
+    const { data, error } = await (await createClient())
       .from("developers")
       .select("*")
       .order("end_date", { ascending: true });
-    if (error) loadError = error.message;
-    developers = (data ?? []) as Developer[];
-  }
+    return { rows: (data ?? []) as Developer[], error: error?.message ?? "" };
+  };
+  const [session, { rows: developers, error: loadError }] = await Promise.all([getSession(), load()]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">

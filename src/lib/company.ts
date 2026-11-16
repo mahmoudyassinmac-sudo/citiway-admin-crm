@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/auth";
 
@@ -12,7 +13,7 @@ export interface CompanySettings {
   nextRef: string | null;
 }
 
-export async function getCompany(): Promise<CompanySettings> {
+export const getCompany = cache(async (): Promise<CompanySettings> => {
   const fallback: CompanySettings = {
     company_name: "Citiway Real Estate",
     trade_license: "726153",
@@ -32,4 +33,4 @@ export async function getCompany(): Promise<CompanySettings> {
     supabase.rpc("peek_letter_ref"),
   ]);
   return { ...fallback, ...(data ?? {}), nextRef: (ref as string | null) ?? null };
-}
+});
