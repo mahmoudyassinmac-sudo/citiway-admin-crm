@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/* Citiway brand tokens (same palette as the original standalone tools) */
+@theme {
+  --color-brand: #7aa3d8;
+  --color-brand-soft: #eaf1fa;
+  --color-brand-line: #c9d9ee;
+  --color-navy: #1e3553;
+  --color-navy-light: #2c4a70;
+  --color-ink: #3f3f3f;
+  --font-head: "Montserrat", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Tailwind v4 changed the default border colour; keep v3 behaviour so the ported
+   document tools look exactly like the originals. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
+
+html,
+body {
+  margin: 0;
+  background: #f3f5f8;
+  color: var(--color-ink);
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+[dir="rtl"] {
+  font-family: "IBM Plex Sans Arabic", "Inter", sans-serif;
+}
