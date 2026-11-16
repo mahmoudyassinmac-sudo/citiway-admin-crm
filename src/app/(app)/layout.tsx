@@ -12,6 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         role={session.role}
         name={session.fullName ?? session.email ?? "Guest"}
         configured={session.configured}
+        modules={session.permissions.modules}
       />
       <div className="min-w-0 flex-1">
         {!session.configured && (

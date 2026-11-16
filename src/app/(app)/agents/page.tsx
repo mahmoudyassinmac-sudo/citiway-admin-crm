@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { AgentsManager } from "@/components/agents/agents-manager";
 import { getSession, supabaseConfigured } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -12,6 +13,7 @@ export default async function AgentsPage() {
     return (data ?? []) as Agent[];
   };
   const [session, agents] = await Promise.all([getSession(), load()]);
+  if (!session.permissions.modules.agents) redirect("/");
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       <h1 className="font-head text-2xl font-bold text-navy">Agents &amp; RERA Compliance</h1>

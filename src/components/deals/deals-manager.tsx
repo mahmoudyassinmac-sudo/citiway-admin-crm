@@ -9,7 +9,7 @@ import { formatDate } from "@/lib/developers";
 import { STAGES, aed, type Deal } from "@/lib/types";
 import { DealForm, type DealLookups } from "./deal-form";
 
-export function DealsManager({ deals, lookups, canEdit, canDelete }: { deals: Deal[]; lookups: DealLookups; canEdit: boolean; canDelete: boolean }) {
+export function DealsManager({ deals, lookups, canEdit, canDelete, canInvoice }: { deals: Deal[]; lookups: DealLookups; canEdit: boolean; canDelete: boolean; canInvoice: boolean }) {
   const router = useRouter();
   const [editing, setEditing] = useState<Deal | "new" | null>(null);
 
@@ -47,7 +47,7 @@ export function DealsManager({ deals, lookups, canEdit, canDelete }: { deals: De
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1.5">
                     <Link className={link} href={`/letters?template=commission&client=${d.client_id ?? ""}&developer=${d.developer_id ?? ""}&agent=${d.agent_id ?? ""}&unit=${encodeURIComponent(d.unit_no ?? "")}`}>Undertaking</Link>
-                    {canEdit && <Link className={link} href={`/finance/tax-invoice?client=${d.client_id ?? ""}&developer=${d.developer_id ?? ""}&deal=${d.id}`}>Invoice</Link>}
+                    {canInvoice && <Link className={link} href={`/finance/tax-invoice?client=${d.client_id ?? ""}&developer=${d.developer_id ?? ""}&deal=${d.id}`}>Invoice</Link>}
                   </div>
                 </td>
                 <td className="px-4 py-3">

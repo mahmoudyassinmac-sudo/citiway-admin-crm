@@ -441,7 +441,7 @@ function App({ clients = [], initial = {} }) {
     setD((prev) => ({ ...prev, tenantName: c.full_name, tenantEid: c.id_passport_no || '', tenantEmail: c.email || '', tenantPhone: c.phone || '' }));
   };
   useEffect(() => { const c = clients.find((x) => x.id === initial.client); if (c) pick({ kind: 'client', record: c }); }, []);
-  const { note: crmNote, issue } = useIssueDocument(() => ({ docType: 'rental_contract', docNo: `TC-${d.building || 'UNIT'}-${d.propNo || 'NA'}-${d.from || d.date}`.replace(/\s+/g, '-'), amount: parseFloat(d.annualRent) || 0, vat: 0, total: parseFloat(d.contractValue || d.annualRent) || 0, clientId }));
+  const { note: crmNote, issue, canIssue } = useIssueDocument(() => ({ docType: 'rental_contract', docNo: `TC-${d.building || 'UNIT'}-${d.propNo || 'NA'}-${d.from || d.date}`.replace(/\s+/g, '-'), amount: parseFloat(d.annualRent) || 0, vat: 0, total: parseFloat(d.contractValue || d.annualRent) || 0, clientId }));
 
   const issueAndPrint = async () => { if (await issue()) doPrint(); };
 
@@ -466,7 +466,7 @@ function App({ clients = [], initial = {} }) {
           <div className="ml-auto flex gap-2 whitespace-nowrap" style={{ flexShrink: 0 }}>
             <button onClick={() => setD({ ...INITIAL, date: today() })} className="border border-blue-200/50 hover:bg-white/10 transition text-white font-semibold text-sm px-3 py-2 rounded-lg">Clear form</button>
             <button onClick={() => setD(SAMPLE)} className="border border-blue-200/50 hover:bg-white/10 transition text-white font-semibold text-sm px-3 py-2 rounded-lg">Load sample</button>
-            <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="bg-emerald-500 hover:bg-emerald-400 transition text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>
+            {canIssue && <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="bg-emerald-500 hover:bg-emerald-400 transition text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>}
             <button onClick={doPrint} title="Print a draft without recording it" className="bg-brand hover:bg-white transition text-navy font-semibold text-sm px-4 py-2 rounded-lg">Print / Save as PDF</button>
           </div>
         </div>

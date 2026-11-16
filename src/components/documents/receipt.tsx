@@ -293,7 +293,7 @@ function App({ company = {}, clients = [], initial = {} }) {
   const [clientId, setClientId] = useState('');
   const pick = (p) => { setClientId(p.record.id); setD((prev) => ({ ...prev, fromName: p.record.full_name })); };
   useEffect(() => { const c = clients.find((x) => x.id === initial.client); if (c) pick({ kind: 'client', record: c }); }, []);
-  const { note: crmNote, issue } = useIssueDocument(() => ({ docType: 'receipt', docNo: d.receiptNo, amount: calc.base, vat: calc.vat, total: calc.total, clientId }));
+  const { note: crmNote, issue, canIssue } = useIssueDocument(() => ({ docType: 'receipt', docNo: d.receiptNo, amount: calc.base, vat: calc.vat, total: calc.total, clientId }));
 
   const issueAndPrint = async () => { if (await issue()) doPrint(); };
 
@@ -315,7 +315,7 @@ function App({ company = {}, clients = [], initial = {} }) {
             <div className="font-head font-bold tracking-wide">Receipt Generator</div>
             <div className="text-[12px] text-blue-100">Template #1 · Dynamic Receipt / Tax Receipt</div>
           </div>
-          <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto bg-emerald-500 hover:bg-emerald-400 transition text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>
+          {canIssue && <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto bg-emerald-500 hover:bg-emerald-400 transition text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>}
           <button onClick={doPrint} title="Print a draft without recording it" className="bg-brand hover:bg-white hover:text-navy transition text-navy font-semibold text-sm px-4 py-2 rounded-lg">
             Print / Save as PDF
           </button>

@@ -2,8 +2,15 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import {
+  fullAccess,
+  resolvePermissions,
+  type ModuleKey,
+  type Permissions,
+  type Role,
+} from "@/lib/permissions";
 
-export type AppRole = "admin" | "accountant" | "agent";
+export type AppRole = Role;
 
 export interface Session {
   configured: boolean;
@@ -11,6 +18,8 @@ export interface Session {
   email: string | null;
   fullName: string | null;
   role: AppRole;
+  /** Effective permissions (full access for admins). */
+  permissions: Permissions;
 }
 
 export function supabaseConfigured(): boolean {
@@ -28,7 +37,7 @@ export function supabaseConfigured(): boolean {
 export const getSession = cache(async (): Promise<Session> => {
   if (!supabaseConfigured()) {
     // Local preview only (the proxy blocks unconfigured production): admin so every tool can be inspected.
-    return { configured: false, userId: null, email: null, fullName: null, role: "admin" };
+    return { configured: false, userId: null, email: null, fullName: null, role: "admin", permissions: fullAccess() };
   }
   const supabase = await createClient();
   // getClaims() verifies the JWT locally (cached JWKS) — no Auth-server round trip per navigation.
@@ -38,15 +47,31 @@ export const getSession = cache(async (): Promise<Session> => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, role")
+    .select("full_name, role, permissions")
     .eq("id", claims.sub)
     .maybeSingle();
 
+  const role = (profile?.role as AppRole | undefined) ?? "agent";
   return {
     configured: true,
     userId: claims.sub,
     email: (claims.email as string | undefined) ?? null,
     fullName: profile?.full_name ?? null,
-    role: (profile?.role as AppRole | undefined) ?? "agent",
+    role,
+    permissions: resolvePermissions(role, profile?.permissions),
   };
 });
+
+/** Redirects home unless the user may open this module (admins always may). */
+export async function requireModule(key: ModuleKey): Promise<Session> {
+  const session = await getSession();
+  if (!session.permissions.modules[key]) redirect("/");
+  return session;
+}
+
+/** Admin-only pages / actions. */
+export async function requireAdmin(): Promise<Session> {
+  const session = await getSession();
+  if (session.role !== "admin") redirect("/");
+  return session;
+}

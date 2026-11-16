@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { FileSignature, FileText, Receipt } from "lucide-react";
 import { getSession } from "@/lib/auth";
-import { DOCUMENT_TOOLS } from "@/lib/documents";
+import { toolsFor } from "@/lib/documents";
 import { createClient } from "@/lib/supabase/server";
 import { PipelineBoard } from "@/components/deals/pipeline-board";
 import { getLookups } from "@/lib/lookups";
@@ -12,11 +12,12 @@ export const metadata = { title: "Finance & Documents — Citiway CRM" };
 
 export default async function FinancePage() {
   const session = await getSession();
-  const tools = DOCUMENT_TOOLS.filter((t) => t.roles.includes(session.role));
-  if (tools.length === 0) redirect("/");
+  if (!session.permissions.modules.finance) redirect("/");
+  // Only the document types this user is allowed to create (e.g. never payment vouchers for an agent without it).
+  const tools = toolsFor(session.permissions);
 
   const loadDeals = async (): Promise<Deal[]> => {
-    if (!session.configured || session.role === "agent") return [];
+    if (!session.configured || !session.permissions.modules.deals) return [];
     const { data } = await (await createClient())
       .from("deals")
       .select(DEAL_SELECT)
@@ -34,12 +35,12 @@ export default async function FinancePage() {
         Contracts, 5% VAT tax invoices, receipts and the commission collection pipeline.
       </p>
 
-      {session.role !== "agent" && (
+      {session.permissions.modules.deals && (
         <section className="mb-10">
           <h2 className="mb-3 font-head text-sm font-bold uppercase tracking-wider text-navy">
             Commission collection pipeline
           </h2>
-          <PipelineBoard deals={deals} lookups={lookups} canEdit={session.configured} />
+          <PipelineBoard deals={deals} lookups={lookups} canEdit={session.configured && session.role !== "agent"} />
         </section>
       )}
 

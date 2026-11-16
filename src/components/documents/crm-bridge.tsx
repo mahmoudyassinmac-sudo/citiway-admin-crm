@@ -1,7 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+
+const CanIssueContext = createContext(true);
+
+/** Provided by DocumentHost: false hides "Save & Issue" for users without can_create_finance. */
+export function CanIssueProvider({ value, children }: { value: boolean; children: React.ReactNode }) {
+  return <CanIssueContext.Provider value={value}>{children}</CanIssueContext.Provider>;
+}
+export const useCanIssue = () => useContext(CanIssueContext);
 
 export interface FinanceRecord {
   docType: "tax_invoice" | "receipt" | "rental_contract" | "payment_voucher" | "other";
@@ -54,6 +62,7 @@ export function useIssueDocument(getRecord: () => FinanceRecord | null) {
     ref.current = getRecord; // always read the latest form state at click time
   });
   const [note, setNote] = useState("");
+  const canIssue = useCanIssue();
   const issue = async (): Promise<boolean> => {
     const rec = ref.current();
     if (!rec) return true;
@@ -61,7 +70,7 @@ export function useIssueDocument(getRecord: () => FinanceRecord | null) {
     setNote(res.message);
     return res.ok;
   };
-  return { note, issue };
+  return { note, issue, canIssue };
 }
 
 interface ClientLike { id: string; full_name: string }

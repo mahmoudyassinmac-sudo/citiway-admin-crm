@@ -299,7 +299,7 @@ function App({ company = {} }) {
     return { fee, vat, total, autoWords: wordsFor(total, d.wordsCurrency), words: d.wordsOverride.trim() || wordsFor(total, d.wordsCurrency) };
   }, [d.fee, d.outsideUae, d.wordsCurrency, d.wordsOverride]);
 
-  const { note: crmNote, issue } = useIssueDocument(() => ({ docType: 'tax_invoice', docNo: d.invNo, amount: calc.fee, vat: calc.vat, total: calc.total }));
+  const { note: crmNote, issue, canIssue } = useIssueDocument(() => ({ docType: 'tax_invoice', docNo: d.invNo, amount: calc.fee, vat: calc.vat, total: calc.total }));
   const issueAndPrint = async () => { if (await issue()) doPrint(); };
 
   const doPrint = () => {
@@ -321,7 +321,7 @@ function App({ company = {} }) {
             <div className="font-head font-bold tracking-wide">ADNOC Distribution Tax Invoice</div>
             <div className="text-[12px] text-blue-100">Template #6 · ADNOC format (CW-AD-S-2610006) · SAR billing</div>
           </div>
-          <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto bg-emerald-500 hover:bg-emerald-400 transition text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>
+          {canIssue && <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto bg-emerald-500 hover:bg-emerald-400 transition text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>}
           <button onClick={doPrint} title="Print a draft without recording it" className="bg-brand hover:bg-white hover:text-navy transition text-navy font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">
             Print / Save as PDF
           </button>

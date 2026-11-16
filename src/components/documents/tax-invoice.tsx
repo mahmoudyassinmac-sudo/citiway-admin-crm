@@ -325,7 +325,7 @@ function App({ company = {}, clients = [], developers = [], initial = {} }) {
     const dl = initial.deal;
     if (dl) setD((prev) => ({ ...prev, rows: [{ ...prev.rows[0], unit: [dl.project_name, dl.unit_no].filter(Boolean).join(' - ').toUpperCase(), price: dl.sale_price_aed != null ? String(dl.sale_price_aed) : prev.rows[0].price, com: dl.commission_pct != null ? String(dl.commission_pct) : prev.rows[0].com }] }));
   }, []);
-  const { note: crmNote, issue } = useIssueDocument(() => ({ docType: 'tax_invoice', docNo: d.invNo, amount: totals.com, vat: totals.vat, total: totals.incl, ...partyIds }));
+  const { note: crmNote, issue, canIssue } = useIssueDocument(() => ({ docType: 'tax_invoice', docNo: d.invNo, amount: totals.com, vat: totals.vat, total: totals.incl, ...partyIds }));
 
   const issueAndPrint = async () => { if (await issue()) doPrint(); };
 
@@ -347,7 +347,7 @@ function App({ company = {}, clients = [], developers = [], initial = {} }) {
             <div className="font-head font-bold tracking-wide">Tax Invoice Generator</div>
             <div className="text-[12px] text-blue-100">Template #5 · Developer / Commission Tax Invoice</div>
           </div>
-          <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto bg-emerald-500 hover:bg-emerald-400 transition text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>
+          {canIssue && <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto bg-emerald-500 hover:bg-emerald-400 transition text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>}
           <button onClick={doPrint} title="Print a draft without recording it" className="bg-brand hover:bg-white hover:text-navy transition text-navy font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">
             Print / Save as PDF
           </button>

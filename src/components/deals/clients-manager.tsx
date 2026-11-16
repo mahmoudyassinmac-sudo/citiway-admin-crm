@@ -53,7 +53,7 @@ function ClientForm({ client, onClose, onSaved }: { client: Client | null; onClo
   );
 }
 
-export function ClientsManager({ clients, canDelete, financeUser }: { clients: Client[]; canDelete: boolean; financeUser: boolean }) {
+export function ClientsManager({ clients, canDelete, allowed }: { clients: Client[]; canDelete: boolean; allowed: { contract: boolean; invoice: boolean; receipt: boolean } }) {
   const router = useRouter();
   const [editing, setEditing] = useState<Client | "new" | null>(null);
   const [q, setQ] = useState("");
@@ -99,11 +99,9 @@ export function ClientsManager({ clients, canDelete, financeUser }: { clients: C
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1.5">
                     <Link className={link} href={`/letters?template=commission&client=${c.id}`}>Commission letter</Link>
-                    {financeUser && (<>
-                      <Link className={link} href={`/finance/tenancy-contract?client=${c.id}`}>Contract</Link>
-                      <Link className={link} href={`/finance/tax-invoice?client=${c.id}`}>Invoice</Link>
-                      <Link className={link} href={`/finance/receipt?client=${c.id}`}>Receipt</Link>
-                    </>)}
+                    {allowed.contract && <Link className={link} href={`/finance/tenancy-contract?client=${c.id}`}>Contract</Link>}
+                    {allowed.invoice && <Link className={link} href={`/finance/tax-invoice?client=${c.id}`}>Invoice</Link>}
+                    {allowed.receipt && <Link className={link} href={`/finance/receipt?client=${c.id}`}>Receipt</Link>}
                   </div>
                 </td>
                 <td className="px-4 py-3">

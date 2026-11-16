@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { DevelopersManager } from "@/components/developers/developers-manager";
 import { getSession, supabaseConfigured } from "@/lib/auth";
 import type { Developer } from "@/lib/developers";
@@ -16,6 +17,8 @@ export default async function DevelopersPage() {
     return { rows: (data ?? []) as Developer[], error: error?.message ?? "" };
   };
   const [session, { rows: developers, error: loadError }] = await Promise.all([getSession(), load()]);
+
+  if (!session.permissions.modules.developers) redirect("/");
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">

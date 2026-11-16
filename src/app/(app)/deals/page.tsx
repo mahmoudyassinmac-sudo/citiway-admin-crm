@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ClientsManager } from "@/components/deals/clients-manager";
 import { DealsManager } from "@/components/deals/deals-manager";
 import { getSession } from "@/lib/auth";
@@ -11,6 +12,7 @@ export const metadata = { title: "Clients & Deals — Citiway CRM" };
 export default async function DealsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const tab = (await searchParams).tab === "deals" ? "deals" : "clients";
   const session = await getSession(); // shared with the layout via React cache()
+  if (!session.permissions.modules.deals) redirect("/");
   const loadDeals = async (): Promise<Deal[]> => {
     if (!session.configured || tab !== "deals") return [];
     const { data } = await (await createClient())
@@ -20,7 +22,8 @@ export default async function DealsPage({ searchParams }: { searchParams: Promis
     return (data ?? []) as Deal[];
   };
   const [{ clients, developers, agents }, deals] = await Promise.all([getLookups(), loadDeals()]);
-  const finance = session.role !== "agent";
+  const docs = session.permissions.modules.finance ? session.permissions.finance_docs : null;
+  const canWrite = session.role !== "agent";
   const tabCls = (on: boolean) =>
     `rounded-lg px-4 py-2 text-sm font-semibold ${on ? "bg-navy text-white" : "bg-white text-navy ring-1 ring-slate-200 hover:ring-brand"}`;
 
@@ -36,12 +39,17 @@ export default async function DealsPage({ searchParams }: { searchParams: Promis
         <Link href="/deals?tab=deals" className={tabCls(tab === "deals")}>Deals</Link>
       </div>
       {tab === "clients" ? (
-        <ClientsManager clients={clients} canDelete={session.role === "admin"} financeUser={finance} />
+        <ClientsManager
+          clients={clients}
+          canDelete={session.role === "admin"}
+          allowed={{ contract: !!docs?.rental_contract, invoice: !!docs?.tax_invoice, receipt: !!docs?.receipt }}
+        />
       ) : (
         <DealsManager
           deals={deals}
           lookups={{ clients, developers, agents }}
-          canEdit={finance && session.configured}
+          canEdit={canWrite && session.configured}
+          canInvoice={!!docs?.tax_invoice && canWrite}
           canDelete={session.role === "admin"}
         />
       )}

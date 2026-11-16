@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import type { AppRole } from "@/lib/auth";
+import type { DocType, Permissions } from "@/lib/permissions";
 import AdnocInvoice from "@/components/documents/adnoc-invoice";
 import adnocCss from "@/components/documents/adnoc-invoice-styles";
 import DealProposal from "@/components/documents/deal-proposal";
@@ -22,24 +22,28 @@ export interface DocumentTool {
   title: string;
   description: string;
   group: "Finance" | "Deals & Marketing";
-  roles: AppRole[];
+  /** Finance document type this tool produces (gated by finance_docs). Tools without one follow the Deals module. */
+  docType: DocType | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Component: ComponentType<any>;
   css: string;
 }
 
-const finance: AppRole[] = ["admin", "accountant"];
-const everyone: AppRole[] = ["admin", "accountant", "agent"];
 
 export const DOCUMENT_TOOLS: DocumentTool[] = [
-  { slug: "tax-invoice", title: "Tax Invoice", description: "UAE 5% VAT commission invoice showing the agency TRN.", group: "Finance", roles: finance, Component: TaxInvoice, css: taxCss },
-  { slug: "receipt", title: "Payment Receipt", description: "Receipt for cash, cheque or transfer payments.", group: "Finance", roles: finance, Component: Receipt, css: receiptCss },
-  { slug: "tenancy-contract", title: "Tenancy Contract", description: "Dubai Unified Tenancy Contract generator.", group: "Finance", roles: finance, Component: TenancyContract, css: tenancyCss },
-  { slug: "payment-voucher", title: "Payment Voucher", description: "Outgoing payment voucher with approvals.", group: "Finance", roles: finance, Component: PaymentVoucher, css: voucherCss },
-  { slug: "adnoc-invoice", title: "ADNOC Tax Invoice", description: "ADNOC-format commission tax invoice.", group: "Finance", roles: finance, Component: AdnocInvoice, css: adnocCss },
-  { slug: "deal-proposal", title: "Property & Deal Proposal", description: "Client-facing proposal with payment plan and QR code.", group: "Deals & Marketing", roles: everyone, Component: DealProposal, css: dealCss },
-  { slug: "unit-handover", title: "Unit Handover & Inspection", description: "Snagging / handover inspection form.", group: "Deals & Marketing", roles: everyone, Component: UnitHandover, css: handoverCss },
-  { slug: "marketing-approval", title: "Marketing Approval", description: "Marketing material approval request.", group: "Deals & Marketing", roles: everyone, Component: MarketingApproval, css: marketingCss },
+  { slug: "tax-invoice", title: "Tax Invoice", description: "UAE 5% VAT commission invoice showing the agency TRN.", group: "Finance", docType: "tax_invoice", Component: TaxInvoice, css: taxCss },
+  { slug: "receipt", title: "Payment Receipt", description: "Receipt for cash, cheque or transfer payments.", group: "Finance", docType: "receipt", Component: Receipt, css: receiptCss },
+  { slug: "tenancy-contract", title: "Tenancy Contract", description: "Dubai Unified Tenancy Contract generator.", group: "Finance", docType: "rental_contract", Component: TenancyContract, css: tenancyCss },
+  { slug: "payment-voucher", title: "Payment Voucher", description: "Outgoing payment voucher with approvals.", group: "Finance", docType: "payment_voucher", Component: PaymentVoucher, css: voucherCss },
+  { slug: "adnoc-invoice", title: "ADNOC Tax Invoice", description: "ADNOC-format commission tax invoice.", group: "Finance", docType: "tax_invoice", Component: AdnocInvoice, css: adnocCss },
+  { slug: "deal-proposal", title: "Property & Deal Proposal", description: "Client-facing proposal with payment plan and QR code.", group: "Deals & Marketing", docType: null, Component: DealProposal, css: dealCss },
+  { slug: "unit-handover", title: "Unit Handover & Inspection", description: "Snagging / handover inspection form.", group: "Deals & Marketing", docType: null, Component: UnitHandover, css: handoverCss },
+  { slug: "marketing-approval", title: "Marketing Approval", description: "Marketing material approval request.", group: "Deals & Marketing", docType: null, Component: MarketingApproval, css: marketingCss },
 ];
 
 export const findTool = (slug: string) => DOCUMENT_TOOLS.find((t) => t.slug === slug);
+
+/** Tools this user may open: finance documents need the Finance module + that document type; the rest follow Deals. */
+export function toolsFor(p: Permissions): DocumentTool[] {
+  return DOCUMENT_TOOLS.filter((t) => (t.docType ? p.modules.finance && p.finance_docs[t.docType] : p.modules.deals));
+}

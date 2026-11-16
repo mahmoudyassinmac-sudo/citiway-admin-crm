@@ -271,7 +271,7 @@ function App() {
   const showChequeWarn = d.method === 'Cheque' && chequeSum > 0 && Math.abs(chequeSum - calc.amount) > 0.005;
   const updCheque = (id, k, v) => setD((p) => ({ ...p, cheques: p.cheques.map((c) => (c.id === id ? { ...c, [k]: v } : c)) }));
 
-  const { note: crmNote, issue } = useIssueDocument(() => ({ docType: 'payment_voucher', docNo: d.voucherNo, amount: calc.amount, vat: 0, total: calc.amount }));
+  const { note: crmNote, issue, canIssue } = useIssueDocument(() => ({ docType: 'payment_voucher', docNo: d.voucherNo, amount: calc.amount, vat: 0, total: calc.amount }));
   const issueAndPrint = async () => { if (await issue()) doPrint(); };
 
   const doPrint = () => {
@@ -292,7 +292,7 @@ function App() {
             <div className="font-head font-bold tracking-wide">Payment Voucher Generator</div>
             <div className="text-[12px] text-blue-100">Template #2 · Dynamic Payment Voucher</div>
           </div>
-          <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto bg-emerald-500 hover:bg-emerald-400 transition text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>
+          {canIssue && <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto bg-emerald-500 hover:bg-emerald-400 transition text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>}
           <button onClick={doPrint} title="Print a draft without recording it" className="bg-brand hover:bg-white hover:text-navy transition text-navy font-semibold text-sm px-4 py-2 rounded-lg">
             Print / Save as PDF
           </button>

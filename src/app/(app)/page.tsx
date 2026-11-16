@@ -41,21 +41,23 @@ export default async function Dashboard() {
 
   if (session.configured) {
     const supabase = await createClient();
-    const isFinance = session.role !== "agent";
+    const isFinance = session.permissions.modules.finance;
+    const showDevs = session.permissions.modules.developers;
+    const showBrn = session.permissions.modules.agents;
     const [d, a, deals, l, f] = await Promise.all([
-      supabase
-        .from("developers")
-        .select("id, developer_name, end_date, has_noc")
-        .lte("end_date", cutoff)
-        .order("end_date"),
-      supabase
+      showDevs
+        ? supabase.from("developers").select("id, developer_name, end_date, has_noc").lte("end_date", cutoff).order("end_date")
+        : Promise.resolve({ data: [] as typeof devs }),
+      !showBrn
+        ? Promise.resolve({ data: [] })
+        : supabase
         .from("agents")
         .select("id, full_name, rera_brn, brn_expiry_date")
         .eq("is_active", true)
         .not("brn_expiry_date", "is", null)
         .lte("brn_expiry_date", cutoff)
         .order("brn_expiry_date"),
-      isFinance
+      session.permissions.modules.deals
         ? supabase.from("deals").select("commission_aed").neq("stage", "collected")
         : Promise.resolve({ data: [] as { commission_aed: number }[] }),
       supabase

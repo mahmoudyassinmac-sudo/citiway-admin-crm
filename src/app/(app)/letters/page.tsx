@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Letterhead from "@/components/documents/letterhead";
 import letterheadCss from "@/components/documents/letterhead-styles";
 import { DocumentHost } from "@/components/documents/host";
@@ -16,6 +17,7 @@ export default async function LettersPage({ searchParams }: { searchParams: Prom
     getCompany(),
     getLookups(),
   ]);
+  if (!session.permissions.modules.letters) redirect("/");
   // Logged-in agents get their own name + BRN pre-selected.
   const currentAgentId = agents.find((a) => a.user_id && a.user_id === session.userId)?.id ?? null;
   const template = sp.template === "commission" ? "commission" : undefined;

@@ -9,35 +9,42 @@ import {
   LayoutDashboard,
   LogOut,
   Receipt,
+  Settings,
   UserCheck,
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import type { ModuleKey } from "@/lib/permissions";
 
 interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  roles: ("admin" | "accountant" | "agent")[];
+  /** Shown only when this module is enabled for the user (admins see all). */
+  module?: ModuleKey;
+  adminOnly?: boolean;
 }
 
 const NAV: NavItem[] = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "accountant", "agent"] },
-  { href: "/developers", label: "Developers", icon: Building2, roles: ["admin", "accountant", "agent"] },
-  { href: "/letters", label: "Letters", icon: FileText, roles: ["admin", "accountant", "agent"] },
-  { href: "/finance", label: "Finance", icon: Receipt, roles: ["admin", "accountant"] },
-  { href: "/agents", label: "Agents & RERA", icon: UserCheck, roles: ["admin", "accountant", "agent"] },
-  { href: "/deals", label: "Clients & Deals", icon: Handshake, roles: ["admin", "accountant", "agent"] },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/developers", label: "Developers", icon: Building2, module: "developers" },
+  { href: "/letters", label: "Letters", icon: FileText, module: "letters" },
+  { href: "/finance", label: "Finance", icon: Receipt, module: "finance" },
+  { href: "/agents", label: "Agents & RERA", icon: UserCheck, module: "agents" },
+  { href: "/deals", label: "Clients & Deals", icon: Handshake, module: "deals" },
+  { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
 
 export function Sidebar({
   role,
   name,
   configured,
+  modules,
 }: {
   role: "admin" | "accountant" | "agent";
   name: string;
   configured: boolean;
+  modules: Record<ModuleKey, boolean>;
 }) {
   const pathname = usePathname();
 
@@ -57,7 +64,9 @@ export function Sidebar({
         </div>
       </div>
       <nav className="flex flex-row gap-1 overflow-x-auto px-3 pb-3 md:flex-1 md:flex-col md:overflow-visible">
-        {NAV.filter((n) => n.roles.includes(role)).map((n) => {
+        {NAV.filter((n) =>
+          n.adminOnly ? role === "admin" : n.module ? role === "admin" || modules[n.module] : true,
+        ).map((n) => {
           const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
           const Icon = n.icon;
           return (

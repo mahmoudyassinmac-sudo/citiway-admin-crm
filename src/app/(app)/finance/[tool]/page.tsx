@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { DocumentHost } from "@/components/documents/host";
 import { getSession } from "@/lib/auth";
 import { getCompany } from "@/lib/company";
-import { DOCUMENT_TOOLS, findTool } from "@/lib/documents";
+import { DOCUMENT_TOOLS, findTool, toolsFor } from "@/lib/documents";
 import { getLookups } from "@/lib/lookups";
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,9 +28,9 @@ export default async function DocumentToolPage({
   if (!tool) notFound();
   const sp = await searchParams;
   const session = await getSession();
-  if (!tool.roles.includes(session.role)) redirect("/");
+  if (!toolsFor(session.permissions).some((t) => t.slug === tool.slug)) redirect("/");
   const loadDeal = async () => {
-    if (!sp.deal || !session.configured || session.role === "agent" || !/^[0-9a-f-]{36}$/i.test(sp.deal)) return null;
+    if (!sp.deal || !session.configured || !session.permissions.modules.deals || !/^[0-9a-f-]{36}$/i.test(sp.deal)) return null;
     const { data } = await (await createClient())
       .from("deals")
       .select("project_name, unit_no, sale_price_aed, commission_pct")
@@ -42,7 +42,7 @@ export default async function DocumentToolPage({
 
   const { Component } = tool;
   return (
-    <DocumentHost css={tool.css}>
+    <DocumentHost css={tool.css} canIssue={session.permissions.can_create_finance}>
       <Component
         company={company}
         clients={clients}
