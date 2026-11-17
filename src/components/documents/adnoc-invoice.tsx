@@ -225,7 +225,7 @@ function AdnocSheet({ d, calc }) {
       </div>
 
       {/* ---------- Company stamp & signature (empty unless stamped by the Super Admin) ---------- */}
-      <StampSlot align="right" style={{ right: '49pt', bottom: '145pt', width: '210pt', height: '75pt' }} />
+      <StampSlot align="center" style={{ left: '250pt', top: '682pt', width: '200pt', height: '80pt' }} />
 
       {/* ---------- Letterhead footer graphic ---------- */}
       <img src={PDF_FOOTER} alt="" style={{ position: 'absolute', left: '46.4pt', bottom: '16.3pt', width: '526.7pt', height: '124pt' }} />
