@@ -1,7 +1,13 @@
 /** Shared permission model (safe for server and client). Mirrors profiles.permissions in Postgres. */
 
-export type Role = "admin" | "accountant" | "agent";
-export const ROLES: Role[] = ["admin", "accountant", "agent"];
+export type Role = "super_admin" | "admin" | "accountant" | "agent";
+export const ROLES: Role[] = ["super_admin", "admin", "accountant", "agent"];
+
+/** Admin-tier roles: full access everywhere, can't be scoped down. Super admin is the sole
+ *  owner of company settings, brand/stamp assets, document sign-off, and admin-tier accounts. */
+export function isAdminOrAbove(role: Role): boolean {
+  return role === "admin" || role === "super_admin";
+}
 
 export const MODULE_KEYS = ["developers", "agents", "deals", "letters", "finance"] as const;
 export type ModuleKey = (typeof MODULE_KEYS)[number];
@@ -70,7 +76,7 @@ export function fullAccess(): Permissions {
 
 /** Sensible defaults per role, used by the "Add user" form and as the fallback for legacy rows. */
 export function presetFor(role: Role): Permissions {
-  if (role === "admin" || role === "accountant") return fullAccess();
+  if (isAdminOrAbove(role) || role === "accountant") return fullAccess();
   return {
     modules: { developers: true, agents: false, deals: true, letters: true, finance: true },
     finance_docs: { rental_contract: true, receipt: true, tax_invoice: false, payment_voucher: false, other: false },
@@ -93,14 +99,14 @@ export function normalizePermissions(raw: unknown, fallback: Permissions): Permi
   };
 }
 
-/** Effective permissions: admins always get everything. */
+/** Effective permissions: admin-tier roles always get everything (can't be scoped down). */
 export function resolvePermissions(role: Role, raw: unknown): Permissions {
-  if (role === "admin") return fullAccess();
+  if (isAdminOrAbove(role)) return fullAccess();
   return normalizePermissions(raw, presetFor(role));
 }
 
 export function summarizePermissions(role: Role, p: Permissions): string[] {
-  if (role === "admin") return ["Full access"];
+  if (isAdminOrAbove(role)) return ["Full access"];
   const out: string[] = [];
   const mods = MODULE_KEYS.filter((k) => p.modules[k]).map((k) => MODULE_LABELS[k]);
   out.push(mods.length ? mods.join(", ") : "No modules");

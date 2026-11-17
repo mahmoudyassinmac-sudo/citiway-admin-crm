@@ -6,15 +6,18 @@ import {
   MODULE_KEYS,
   MODULE_LABELS,
   ROLES,
+  isAdminOrAbove,
   type Permissions,
   type Role,
 } from "@/lib/permissions";
 
-export const ROLE_LABEL: Record<Role, string> = { admin: "Admin", accountant: "Accountant", agent: "Agent" };
+export const ROLE_LABEL: Record<Role, string> = { super_admin: "Super Admin", admin: "Admin", accountant: "Accountant", agent: "Agent" };
 
 export function RoleBadge({ role }: { role: Role }) {
   const cls =
-    role === "admin" ? "bg-gradient-to-r from-navy to-[#3d64a0] text-white shadow-[0_4px_12px_-4px_rgba(30,53,83,0.6)]" : role === "accountant" ? "bg-brand-soft text-navy" : "bg-emerald-50 text-emerald-700";
+    role === "super_admin" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-[0_4px_12px_-4px_rgba(180,130,10,0.6)]"
+    : role === "admin" ? "bg-gradient-to-r from-navy to-[#3d64a0] text-white shadow-[0_4px_12px_-4px_rgba(30,53,83,0.6)]"
+    : role === "accountant" ? "bg-brand-soft text-navy" : "bg-emerald-50 text-emerald-700";
   return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}>{ROLE_LABEL[role]}</span>;
 }
 
@@ -30,7 +33,8 @@ function Check({ label, checked, onChange, disabled }: { label: string; checked:
 const sectionCls = "mb-4 rounded-xl border border-slate-200 p-3";
 const titleCls = "mb-2 text-[11px] font-bold uppercase tracking-wider text-navy";
 
-export function RolePicker({ role, onChange }: { role: Role; onChange: (r: Role) => void }) {
+export function RolePicker({ role, onChange, allowedRoles }: { role: Role; onChange: (r: Role) => void; allowedRoles?: Role[] }) {
+  const options = allowedRoles ?? ROLES;
   return (
     <label className="mb-4 block">
       <span className="mb-1 block text-xs font-semibold text-navy">Role preset</span>
@@ -39,7 +43,7 @@ export function RolePicker({ role, onChange }: { role: Role; onChange: (r: Role)
         onChange={(e) => onChange(e.target.value as Role)}
         className="field px-3 py-2"
       >
-        {ROLES.map((r) => (
+        {options.map((r) => (
           <option key={r} value={r}>{ROLE_LABEL[r]}</option>
         ))}
       </select>
@@ -51,7 +55,7 @@ export function RolePicker({ role, onChange }: { role: Role; onChange: (r: Role)
 }
 
 export function PermissionsEditor({ role, value, onChange }: { role: Role; value: Permissions; onChange: (p: Permissions) => void }) {
-  const locked = role === "admin";
+  const locked = isAdminOrAbove(role);
   return (
     <div>
       {locked && (

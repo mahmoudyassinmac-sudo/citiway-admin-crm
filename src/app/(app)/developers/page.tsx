@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { DevelopersManager } from "@/components/developers/developers-manager";
 import { getSession, supabaseConfigured } from "@/lib/auth";
+import { isAdminOrAbove } from "@/lib/permissions";
 import type { Developer } from "@/lib/developers";
 import { createClient } from "@/lib/supabase/server";
 
@@ -34,7 +35,7 @@ export default async function DevelopersPage() {
       )}
       <DevelopersManager
         developers={developers}
-        canEdit={session.role === "admin"}
+        canEdit={isAdminOrAbove(session.role)}
         enabled={session.configured}
       />
     </div>

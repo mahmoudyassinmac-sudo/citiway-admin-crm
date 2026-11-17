@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AgentsManager } from "@/components/agents/agents-manager";
 import { getSession, supabaseConfigured } from "@/lib/auth";
+import { isAdminOrAbove } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import type { Agent } from "@/lib/types";
 
@@ -21,7 +22,7 @@ export default async function AgentsPage() {
         Broker profiles with RERA BRN tracking. BRN cards within 30 days of expiry are flagged here and on the dashboard;
         agent name and BRN auto-fill into letters and deals.
       </p>
-      <AgentsManager agents={agents} canEdit={session.role === "admin" && session.configured} />
+      <AgentsManager agents={agents} canEdit={isAdminOrAbove(session.role) && session.configured} />
     </div>
   );
 }

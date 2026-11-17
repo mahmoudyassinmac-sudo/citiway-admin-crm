@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   fullAccess,
+  isAdminOrAbove,
   resolvePermissions,
   type ModuleKey,
   type Permissions,
@@ -36,8 +37,8 @@ export function supabaseConfigured(): boolean {
 /** Memoised per request: layout and page share one auth + profile lookup. */
 export const getSession = cache(async (): Promise<Session> => {
   if (!supabaseConfigured()) {
-    // Local preview only (the proxy blocks unconfigured production): admin so every tool can be inspected.
-    return { configured: false, userId: null, email: null, fullName: null, role: "admin", permissions: fullAccess() };
+    // Local preview only (the proxy blocks unconfigured production): super_admin so every tool can be inspected.
+    return { configured: false, userId: null, email: null, fullName: null, role: "super_admin", permissions: fullAccess() };
   }
   const supabase = await createClient();
   // getClaims() verifies the JWT locally (cached JWKS) — no Auth-server round trip per navigation.
@@ -69,9 +70,16 @@ export async function requireModule(key: ModuleKey): Promise<Session> {
   return session;
 }
 
-/** Admin-only pages / actions. */
+/** Admin-tier pages / actions (admin or super_admin). */
 export async function requireAdmin(): Promise<Session> {
   const session = await getSession();
-  if (session.role !== "admin") redirect("/");
+  if (!isAdminOrAbove(session.role)) redirect("/");
+  return session;
+}
+
+/** Super-admin-only pages / actions: company settings, brand assets, admin-tier accounts, sign-off. */
+export async function requireSuperAdmin(): Promise<Session> {
+  const session = await getSession();
+  if (session.role !== "super_admin") redirect("/");
   return session;
 }

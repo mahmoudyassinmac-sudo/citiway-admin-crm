@@ -4,6 +4,7 @@ import { ClientsManager } from "@/components/deals/clients-manager";
 import { DealsManager } from "@/components/deals/deals-manager";
 import { getSession } from "@/lib/auth";
 import { getLookups } from "@/lib/lookups";
+import { isAdminOrAbove } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { DEAL_SELECT, type Deal } from "@/lib/types";
 
@@ -41,7 +42,7 @@ export default async function DealsPage({ searchParams }: { searchParams: Promis
       {tab === "clients" ? (
         <ClientsManager
           clients={clients}
-          canDelete={session.role === "admin"}
+          canDelete={isAdminOrAbove(session.role)}
           allowed={{ contract: !!docs?.rental_contract, invoice: !!docs?.tax_invoice, receipt: !!docs?.receipt }}
         />
       ) : (
@@ -50,7 +51,7 @@ export default async function DealsPage({ searchParams }: { searchParams: Promis
           lookups={{ clients, developers, agents }}
           canEdit={canWrite && session.configured}
           canInvoice={!!docs?.tax_invoice && canWrite}
-          canDelete={session.role === "admin"}
+          canDelete={isAdminOrAbove(session.role)}
         />
       )}
     </div>

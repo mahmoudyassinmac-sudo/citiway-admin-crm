@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { DEALS_DOC_TYPES } from "@/lib/permissions";
+import { DEALS_DOC_TYPES, isAdminOrAbove } from "@/lib/permissions";
 import { DocumentsBrowser, type FinanceRow, type LetterRow } from "@/components/documents/documents-browser";
 
 export const metadata = { title: "Documents — Citiway CRM" };
@@ -160,7 +160,7 @@ export default async function DocumentsPage() {
     <div className="mx-auto max-w-6xl px-6 py-8">
       <h1 className="font-head text-2xl font-bold text-navy">Documents</h1>
       <p className="mb-8 mt-1 text-sm text-slate-500">
-        {session.role === "admin" || session.role === "accountant"
+        {isAdminOrAbove(session.role) || session.role === "accountant"
           ? "Every letter, invoice, receipt and deals document issued across the team."
           : "Letters, invoices, receipts and deals documents you've issued."}
       </p>

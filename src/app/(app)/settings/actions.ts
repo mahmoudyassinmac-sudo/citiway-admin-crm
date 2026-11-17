@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import {
   ROLES,
+  isAdminOrAbove,
   normalizePermissions,
   presetFor,
   resolvePermissions,
@@ -22,12 +23,19 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** Every action re-verifies the caller from their session cookie — never trust the client. */
 async function adminCaller() {
   const session = await getSession();
-  if (!session.configured || session.role !== "admin" || !session.userId) return null;
+  if (!session.configured || !isAdminOrAbove(session.role) || !session.userId) return null;
+  return session;
+}
+
+/** Owner-only actions: company settings, brand/stamp assets, managing admin-tier accounts, sign-off. */
+async function superAdminCaller() {
+  const session = await getSession();
+  if (!session.configured || session.role !== "super_admin" || !session.userId) return null;
   return session;
 }
 
 function cleanPerms(role: Role, raw: unknown): Permissions {
-  return role === "admin" ? resolvePermissions("admin", null) : normalizePermissions(raw, presetFor(role));
+  return isAdminOrAbove(role) ? resolvePermissions(role, null) : normalizePermissions(raw, presetFor(role));
 }
 
 export interface CreateUserInput {
@@ -51,6 +59,8 @@ export async function createDashboardUser(input: CreateUserInput): Promise<Actio
   if (!EMAIL.test(email)) return fail("Enter a valid email address.");
   if (typeof input.password !== "string" || input.password.length < 8) return fail("Password must be at least 8 characters.");
   if (!ROLES.includes(input.role)) return fail("Invalid role.");
+  if (isAdminOrAbove(input.role) && caller.role !== "super_admin")
+    return fail("Only a super admin can create Admin or Super Admin accounts.");
   if (input.agentId && !UUID.test(input.agentId)) return fail("Invalid agent.");
 
   const admin = createAdminClient();
@@ -108,11 +118,17 @@ export async function updateUserPermissions(input: UpdateUserInput): Promise<Act
   if (!caller) return fail("Only admins can edit users.");
   if (!UUID.test(input.userId)) return fail("Invalid user.");
   if (!ROLES.includes(input.role)) return fail("Invalid role.");
-  if (input.userId === caller.userId && input.role !== "admin")
-    return fail("You can't remove your own admin role — ask another admin.");
+  if (input.userId === caller.userId && !isAdminOrAbove(input.role))
+    return fail("You can't remove your own admin-level access — ask another admin.");
   if (input.agentId && !UUID.test(input.agentId)) return fail("Invalid agent.");
 
   const admin = createAdminClient();
+
+  if (caller.role !== "super_admin") {
+    const { data: target } = await admin.from("profiles").select("role").eq("id", input.userId).maybeSingle();
+    if ((target && isAdminOrAbove(target.role as Role)) || isAdminOrAbove(input.role))
+      return fail("Only a super admin can manage Admin or Super Admin accounts.");
+  }
 
   if (input.agentId) {
     const { data: agent } = await admin.from("agents").select("id, user_id").eq("id", input.agentId).maybeSingle();
@@ -141,7 +157,12 @@ export async function resetUserPassword(input: { userId: string; password: strin
   if (!caller) return fail("Only admins can reset passwords.");
   if (!UUID.test(input.userId)) return fail("Invalid user.");
   if (typeof input.password !== "string" || input.password.length < 8) return fail("Password must be at least 8 characters.");
-  const { error } = await createAdminClient().auth.admin.updateUserById(input.userId, { password: input.password });
+  const admin = createAdminClient();
+  if (caller.role !== "super_admin") {
+    const { data: target } = await admin.from("profiles").select("role").eq("id", input.userId).maybeSingle();
+    if (target && isAdminOrAbove(target.role as Role)) return fail("Only a super admin can reset an Admin or Super Admin password.");
+  }
+  const { error } = await admin.auth.admin.updateUserById(input.userId, { password: input.password });
   return error ? fail(error.message) : { ok: true, message: "Password updated." };
 }
 
@@ -150,7 +171,12 @@ export async function deleteDashboardUser(input: { userId: string }): Promise<Ac
   if (!caller) return fail("Only admins can delete users.");
   if (!UUID.test(input.userId)) return fail("Invalid user.");
   if (input.userId === caller.userId) return fail("You can't delete your own account.");
-  const { error } = await createAdminClient().auth.admin.deleteUser(input.userId);
+  const admin = createAdminClient();
+  if (caller.role !== "super_admin") {
+    const { data: target } = await admin.from("profiles").select("role").eq("id", input.userId).maybeSingle();
+    if (target && isAdminOrAbove(target.role as Role)) return fail("Only a super admin can delete an Admin or Super Admin account.");
+  }
+  const { error } = await admin.auth.admin.deleteUser(input.userId);
   if (error) return fail(error.message);
   revalidatePath("/settings");
   return { ok: true, message: "User deleted." };
@@ -168,8 +194,8 @@ export interface CompanyInput {
 }
 
 export async function updateCompanySettings(input: CompanyInput): Promise<ActionResult> {
-  const caller = await adminCaller();
-  if (!caller) return fail("Only admins can change company settings.");
+  const caller = await superAdminCaller();
+  if (!caller) return fail("Only a super admin can change company settings.");
   const v = (s: unknown) => (typeof s === "string" ? s.trim() : "");
   const name = v(input.company_name);
   if (!name) return fail("Company name is required.");

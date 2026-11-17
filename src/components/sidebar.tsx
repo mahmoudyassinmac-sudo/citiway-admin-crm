@@ -15,7 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { ModuleKey } from "@/lib/permissions";
+import { isAdminOrAbove, type ModuleKey, type Role } from "@/lib/permissions";
 
 interface NavItem {
   href: string;
@@ -46,7 +46,7 @@ export function Sidebar({
   configured,
   modules,
 }: {
-  role: "admin" | "accountant" | "agent";
+  role: Role;
   name: string;
   configured: boolean;
   modules: Record<ModuleKey, boolean>;
@@ -70,8 +70,8 @@ export function Sidebar({
       </div>
       <nav className="flex flex-row gap-1 overflow-x-auto px-3 pb-3 md:flex-1 md:flex-col md:overflow-y-auto">
         {NAV.filter((n) => {
-          if (n.adminOnly) return role === "admin";
-          if (role === "admin") return true;
+          if (n.adminOnly) return isAdminOrAbove(role);
+          if (isAdminOrAbove(role)) return true;
           if (n.module) return modules[n.module];
           if (n.anyModule) return n.anyModule.some((m) => modules[m]);
           return true;

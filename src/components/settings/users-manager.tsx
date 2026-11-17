@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
 import { Field, Modal, inputCls } from "@/components/ui/modal";
-import { presetFor, summarizePermissions, type Permissions, type Role } from "@/lib/permissions";
+import { ROLES, isAdminOrAbove, presetFor, summarizePermissions, type Permissions, type Role } from "@/lib/permissions";
 import {
   createDashboardUser,
   deleteDashboardUser,
@@ -37,7 +37,7 @@ function randomPassword() {
 }
 
 /* ------------------------------ Add user ------------------------------ */
-function AddUserModal({ agents, onClose, onDone }: { agents: AgentOption[]; onClose: () => void; onDone: () => void }) {
+function AddUserModal({ agents, allowedRoles, onClose, onDone }: { agents: AgentOption[]; allowedRoles: Role[]; onClose: () => void; onDone: () => void }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -72,7 +72,7 @@ function AddUserModal({ agents, onClose, onDone }: { agents: AgentOption[]; onCl
             <button type="button" onClick={() => setPassword(randomPassword())} className="whitespace-nowrap rounded-lg px-3 text-xs font-semibold text-navy bg-white/50 ring-1 ring-brand-line transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90">Generate</button>
           </div>
         </Field>
-        <RolePicker role={role} onChange={(r) => { setRole(r); setPerms(presetFor(r)); }} />
+        <RolePicker role={role} allowedRoles={allowedRoles} onChange={(r) => { setRole(r); setPerms(presetFor(r)); }} />
         <Field label="Link to agent record (optional)" hint="Links this login to an agent so their own deals, name and BRN follow them.">
           <select className={inputCls} value={agentChoice} onChange={(e) => setAgentChoice(e.target.value)}>
             <option value="">— none —</option>
@@ -94,7 +94,7 @@ function AddUserModal({ agents, onClose, onDone }: { agents: AgentOption[]; onCl
 }
 
 /* ------------------------------ Edit user ------------------------------ */
-function EditUserModal({ user, agents, isSelf, onClose, onDone }: { user: UserRow; agents: AgentOption[]; isSelf: boolean; onClose: () => void; onDone: () => void }) {
+function EditUserModal({ user, agents, allowedRoles, isSelf, onClose, onDone }: { user: UserRow; agents: AgentOption[]; allowedRoles: Role[]; isSelf: boolean; onClose: () => void; onDone: () => void }) {
   const [fullName, setFullName] = useState(user.fullName ?? "");
   const [role, setRole] = useState<Role>(user.role);
   const [perms, setPerms] = useState<Permissions>(user.permissions);
@@ -130,8 +130,8 @@ function EditUserModal({ user, agents, isSelf, onClose, onDone }: { user: UserRo
       <form onSubmit={save}>
         <p className="mb-3 text-xs text-slate-500">{user.email}</p>
         <Field label="Full name"><input className={inputCls} value={fullName} onChange={(e) => setFullName(e.target.value)} /></Field>
-        <RolePicker role={role} onChange={(r) => { setRole(r); setPerms(presetFor(r)); }} />
-        {isSelf && role !== "admin" && <p className="mb-3 text-xs text-red-600">You can&apos;t remove your own admin role.</p>}
+        <RolePicker role={role} allowedRoles={allowedRoles} onChange={(r) => { setRole(r); setPerms(presetFor(r)); }} />
+        {isSelf && !isAdminOrAbove(role) && <p className="mb-3 text-xs text-red-600">You can&apos;t remove your own admin-level access.</p>}
         <Field label="Linked agent record">
           <select className={inputCls} value={agentId} onChange={(e) => setAgentId(e.target.value)}>
             <option value="">— none —</option>
@@ -168,12 +168,14 @@ function EditUserModal({ user, agents, isSelf, onClose, onDone }: { user: UserRo
 }
 
 /* ------------------------------ List ------------------------------ */
-export function UsersManager({ users, agents, currentUserId }: { users: UserRow[]; agents: AgentOption[]; currentUserId: string | null }) {
+export function UsersManager({ users, agents, currentUserId, currentUserRole }: { users: UserRow[]; agents: AgentOption[]; currentUserId: string | null; currentUserRole: Role }) {
   const router = useRouter();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<UserRow | null>(null);
   const done = () => { setAdding(false); setEditing(null); router.refresh(); };
   const agentName = (id: string | null) => agents.find((a) => a.id === id)?.full_name ?? "—";
+  const isSuperAdmin = currentUserRole === "super_admin";
+  const allowedRoles: Role[] = isSuperAdmin ? ROLES : ROLES.filter((r) => !isAdminOrAbove(r));
 
   return (
     <>
@@ -205,15 +207,19 @@ export function UsersManager({ users, agents, currentUserId }: { users: UserRow[
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button onClick={() => setEditing(u)} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-navy bg-white/50 ring-1 ring-brand-line transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90"><Pencil className="h-3.5 w-3.5" /> Edit permissions</button>
+                  {isSuperAdmin || !isAdminOrAbove(u.role) ? (
+                    <button onClick={() => setEditing(u)} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-navy bg-white/50 ring-1 ring-brand-line transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90"><Pencil className="h-3.5 w-3.5" /> Edit permissions</button>
+                  ) : (
+                    <span className="text-xs text-slate-400">Super admin only</span>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      {adding && <AddUserModal agents={agents} onClose={() => setAdding(false)} onDone={done} />}
-      {editing && <EditUserModal user={editing} agents={agents} isSelf={editing.id === currentUserId} onClose={() => setEditing(null)} onDone={done} />}
+      {adding && <AddUserModal agents={agents} allowedRoles={allowedRoles} onClose={() => setAdding(false)} onDone={done} />}
+      {editing && <EditUserModal user={editing} agents={agents} allowedRoles={allowedRoles} isSelf={editing.id === currentUserId} onClose={() => setEditing(null)} onDone={done} />}
     </>
   );
 }

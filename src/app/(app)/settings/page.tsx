@@ -3,15 +3,16 @@ import { redirect } from "next/navigation";
 import { CompanyForm } from "@/components/settings/company-form";
 import { UsersManager, type AgentOption, type UserRow } from "@/components/settings/users-manager";
 import { getSession } from "@/lib/auth";
-import { resolvePermissions, type Role } from "@/lib/permissions";
+import { isAdminOrAbove, resolvePermissions, type Role } from "@/lib/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata = { title: "Settings — Citiway CRM" };
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const session = await getSession();
-  if (session.role !== "admin") redirect("/");
-  const tab = (await searchParams).tab === "company" ? "company" : "users";
+  if (!isAdminOrAbove(session.role)) redirect("/");
+  const isSuperAdmin = session.role === "super_admin";
+  const tab = (await searchParams).tab === "company" && isSuperAdmin ? "company" : "users";
 
   const tabCls = (on: boolean) =>
     `rounded-lg px-4 py-2 text-sm font-semibold ${on ? "btn-primary text-white" : "glass text-navy transition-all duration-200 hover:-translate-y-0.5"}`;
@@ -62,7 +63,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           agentId: agents.find((a) => a.user_id === p.id)?.id ?? null,
         };
       });
-      body = <UsersManager users={users} agents={agents} currentUserId={session.userId} />;
+      body = <UsersManager users={users} agents={agents} currentUserId={session.userId} currentUserRole={session.role} />;
     }
   }
 
@@ -72,7 +73,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       <p className="mb-5 mt-1 text-sm text-slate-500">Manage your team, what each person can see and do, and your company details.</p>
       <div className="mb-5 flex gap-2">
         <Link href="/settings" className={tabCls(tab === "users")}>Users &amp; Permissions</Link>
-        <Link href="/settings?tab=company" className={tabCls(tab === "company")}>Company Settings</Link>
+        {isSuperAdmin && <Link href="/settings?tab=company" className={tabCls(tab === "company")}>Company Settings</Link>}
       </div>
       {body}
     </div>
