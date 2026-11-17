@@ -5,10 +5,11 @@ import React, { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallba
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { issueLetter as issueLetterAction } from '@/app/(app)/documents/actions';
 import { developerStatus, daysLeft } from '@/lib/developers';
+import { StampSlot, SignoffChoice, useSignoff } from '@/components/documents/signoff';
+import { archiveOnScreenDocument } from '@/components/documents/archive';
 
 
 const LOGO = "/assets/citiway-logo.png";
-const STAMP = "/assets/citiway-stamp.png";
 const CO = 'Citiway Real Estate Brokerage L.L.C.';
 let TRN = '100281605400003'; // overwritten from company_settings at render time (see App)
 const footerText = (orn) =>
@@ -370,7 +371,7 @@ function LetterBody({ d, lang = 'en', orn = '' }) {
         {d.signoff && <p dir="auto" style={{ margin: 0, textAlign: TA }}>{hl(d.signoff)}</p>}
         <div style={{ width: '75mm', position: 'relative' }}>
           <div style={{ height: '24mm', position: 'relative' }}>
-            {d.sigMode === 'digital' && <img src={STAMP} alt="Company stamp and signature" style={{ position: 'absolute', [rtl ? 'right' : 'left']: '-2mm', bottom: '-3mm', height: '27mm', width: 'auto' }} />}
+            <StampSlot align={rtl ? 'right' : 'left'} style={{ [rtl ? 'right' : 'left']: '-2mm', bottom: '-3mm', height: '27mm', width: '75mm' }} />
           </div>
           <div style={{ borderTop: '1px solid #1E3553', paddingTop: '1.4mm', lineHeight: 1.45 }}>
             <div dir="auto" style={{ fontWeight: 700, color: '#111827', textAlign: TA }}>{hl(d.signName)}</div>
@@ -448,28 +449,18 @@ function Modal({ title, children, onClose }) {
   );
 }
 
-/* ================= Reference counter & PIN helpers ================= */
+/* ================= Reference counter helpers ================= */
 const REF_RE = /^CW-LTR-(\d{4})-(\d{4,})$/;
 const fmtRef = (year, n) => `CW-LTR-${year}-${String(n).padStart(4, '0')}`;
 const seqKey = (year) => `cw_ltr_seq_${year}`;
 const nextSeq = (year) => Math.max(1, parseInt(store.get(seqKey(year), '1'), 10) || 1);
-async function hashPin(pin) {
-  const data = 'citiway-stamp:' + pin;
-  try {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
-    return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
-  } catch (e) { // non-secure context fallback
-    let h = 5381; for (let i = 0; i < data.length; i++) h = ((h << 5) + h + data.charCodeAt(i)) >>> 0; return 'djb2-' + h.toString(16);
-  }
-}
-
 /* ================= App ================= */
 function App({ company = {}, developers = [], agents = [], clients = [], initial = {} }) {
   if (company.trn) TRN = company.trn;
   const YEAR = new Date().getFullYear();
   const [d, setD] = useState(() => ({
     ref: company.nextRef || fmtRef(YEAR, nextSeq(YEAR)), date: today(),
-    signoff: 'Yours sincerely,', signName: 'Authorized Signatory', signTitle: 'Managing Director', sigMode: 'pending',
+    signoff: 'Yours sincerely,', signName: 'Authorized Signatory', signTitle: 'Managing Director',
     ...draft('salary', { name: 'Ahmed Ali', title: 'Property Consultant', amt: 12000, bank: 'Emirates NBD', nat: 'Egyptian', doj: '01/03/2024' }),
   }));
   const upd = (patch) => setD((p) => ({ ...p, ...(typeof patch === 'function' ? patch(p) : patch) }));
@@ -571,6 +562,7 @@ function App({ company = {}, developers = [], agents = [], clients = [], initial
   // reference counter — advances after an issued letter is printed / exported.
   // Persisted in Supabase (company_settings.next_letter_seq); falls back to localStorage when offline.
   const dRef = useRef(d); dRef.current = d;
+  const signoff = useSignoff(); const signoffRef = useRef(signoff); signoffRef.current = signoff;
   const metaRef = useRef({}); metaRef.current = { tpl, devId, agentId, clientId, lang };
   const [seqInfo, setSeqInfo] = useState(nextSeq(YEAR));
   const [saveNote, setSaveNote] = useState('');
@@ -588,7 +580,13 @@ function App({ company = {}, developers = [], agents = [], clients = [], initial
       const res = await issueLetterAction({ refNo: cur.ref, templateType: ({ salary: 'salary_certificate', commission: 'commission_undertaking', noc: 'noc', propnoc: 'noc' })[meta.tpl] || 'general', language: meta.lang, recipient: cur.to || null, subject: cur.subject || null, bodyHtml: html, developerId: meta.devId || null, agentId: meta.agentId || null, clientId: meta.clientId || null });
       if (!res.ok && res.duplicate) { setSaveNote(`${cur.ref} was already issued. Click "use next" to get a fresh reference number.`); return false; }
       if (!res.ok) { setSaveNote('Could not save the letter to the CRM: ' + res.error); return false; }
-      issuedRef.current = true; setSaveNote(res.message); return true;
+      issuedRef.current = true; setSaveNote(res.message);
+      if (res.id) {
+        setSaveNote(res.message + ' Archiving the PDF…');
+        const arc = await archiveOnScreenDocument({ table: 'letters', id: res.id, title: `Letter ${cur.ref}`, mode: signoffRef.current.mode });
+        setSaveNote(res.message + ' ' + arc.message);
+      }
+      return true;
     } catch (e) { setSaveNote('Could not reach the CRM: ' + e.message); return false; }
   };
   useEffect(() => {
@@ -605,7 +603,7 @@ function App({ company = {}, developers = [], agents = [], clients = [], initial
           store.set(seqKey(YEAR), String(nxt)); setSeqInfo(nxt); upd({ ref: fmtRef(YEAR, nxt) });
         }
       }
-      upd({ sigMode: 'pending' }); // stamp never stays armed after an export
+      if (signoffRef.current.mode === 'stamp') signoffRef.current.setMode('none'); // stamp never stays armed after an export
     };
     window.addEventListener('afterprint', after);
     return () => window.removeEventListener('afterprint', after);
@@ -631,31 +629,6 @@ function App({ company = {}, developers = [], agents = [], clients = [], initial
     if (uniquePh.length) { setSaveNote('Fill or remove the highlighted [placeholders] before issuing — a plain Print still works for drafts.'); return; }
     if (devIssues.some((i) => i.level === 'err') && !window.confirm('Developer validation failed:\n\n' + devIssues.map((i) => '• ' + i.text).join('\n') + '\n\nIssue anyway?')) return;
     if (await issueLetter()) reallyPrint();
-  };
-
-  // digital stamp gate (confirmation + optional 4-digit PIN)
-  const [pinHash, setPinHash] = useState(() => store.get('cw_stamp_pin', ''));
-  const [gate, setGate] = useState(null); // null | 'apply' | 'remove'
-  const [pinIn, setPinIn] = useState(''); const [pinNew, setPinNew] = useState(''); const [pinNew2, setPinNew2] = useState('');
-  const [ack, setAck] = useState(false); const [gateErr, setGateErr] = useState('');
-  const openGate = (mode) => { setGate(mode); setPinIn(''); setPinNew(''); setPinNew2(''); setAck(false); setGateErr(''); };
-  const confirmGate = async () => {
-    if (gate === 'apply') {
-      if (pinHash) {
-        if ((await hashPin(pinIn)) !== pinHash) { setGateErr('Incorrect PIN.'); return; }
-      } else {
-        if (!ack) { setGateErr('Please confirm you are authorised.'); return; }
-        if (pinNew || pinNew2) {
-          if (!/^\d{4}$/.test(pinNew)) { setGateErr('PIN must be exactly 4 digits.'); return; }
-          if (pinNew !== pinNew2) { setGateErr('PINs do not match.'); return; }
-          const h = await hashPin(pinNew); store.set('cw_stamp_pin', h); setPinHash(h);
-        }
-      }
-      upd({ sigMode: 'digital' }); setGate(null);
-    } else if (gate === 'remove') {
-      if ((await hashPin(pinIn)) !== pinHash) { setGateErr('Incorrect PIN.'); return; }
-      store.set('cw_stamp_pin', ''); setPinHash(''); setGate(null);
-    }
   };
 
   // manager hand-off
@@ -784,15 +757,8 @@ function App({ company = {}, developers = [], agents = [], clients = [], initial
               <Field label="Signatory Name"><Input value={d.signName} onChange={set('signName')} dir="auto" /></Field>
             </div>
             <Field label="Signatory Title"><Input value={d.signTitle} onChange={set('signTitle')} dir="auto" /></Field>
-            <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-lg">
-              <button type="button" onClick={() => upd({ sigMode: 'pending' })} className={`py-2 px-1 rounded-md text-[12px] font-semibold transition ${d.sigMode === 'pending' ? 'bg-navy text-white shadow' : 'text-slate-600 hover:bg-white'}`}>Pending Manager Signature</button>
-              <button type="button" onClick={() => (d.sigMode === 'digital' ? null : openGate('apply'))} className={`py-2 px-1 rounded-md text-[12px] font-semibold transition ${d.sigMode === 'digital' ? 'bg-navy text-white shadow' : 'text-slate-600 hover:bg-white'}`}>🔒 Apply Digital Stamp & Signature</button>
-            </div>
-            {d.sigMode === 'digital' && <div className="text-[12px] rounded-md bg-amber-50 border border-amber-200 text-amber-800 p-2">⚠ The company stamp and signature will be printed. It switches back to "Pending" automatically after each export.</div>}
-            <div className="text-[11px] text-slate-500 flex justify-between">
-              <span>Stamp PIN: {pinHash ? 'set ✓' : 'not set (confirmation only)'}</span>
-              {pinHash && <button type="button" className="underline text-red-600" onClick={() => openGate('remove')}>Remove PIN</button>}
-            </div>
+            <div className="text-[12px] font-semibold text-navy pt-1">Company stamp &amp; signature</div>
+            <SignoffChoice compact />
           </Card>
 
           <Card title="Company Settings">
@@ -819,7 +785,7 @@ function App({ company = {}, developers = [], agents = [], clients = [], initial
               {uniquePh.length > 0 && <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700" title={uniquePh.join('  ')}>⚠ {uniquePh.length} unfilled placeholder{uniquePh.length > 1 ? 's' : ''}</span>}
               {fit < 1 && <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Fitted to 1 page · {Math.round(fit * 100)}%</span>}
               <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">{lang === 'ar' ? 'العربية · RTL' : 'English · LTR'}</span>
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${d.sigMode === 'digital' ? 'bg-emerald-600 text-white' : 'bg-navy text-white'}`}>{d.sigMode === 'digital' ? 'DIGITALLY SIGNED' : 'PENDING SIGNATURE'}</span>
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${signoff.mode === 'stamp' ? 'bg-emerald-600 text-white' : signoff.mode === 'request' ? 'bg-amber-500 text-white' : 'bg-navy text-white'}`}>{signoff.mode === 'stamp' ? 'STAMPED & SIGNED' : signoff.mode === 'request' ? 'STAMP REQUESTED' : 'NO STAMP'}</span>
             </span>
           </div>
           <ScaledA4><Sheet d={d} fit={fit} lang={lang} orn={orn.trim()} /></ScaledA4>
@@ -842,29 +808,7 @@ function App({ company = {}, developers = [], agents = [], clients = [], initial
           </div>
         </Modal>
       )}
-      {gate && (
-        <Modal title={gate === 'remove' ? 'Remove stamp PIN' : 'Apply digital stamp & signature'} onClose={() => setGate(null)}>
-          {gate === 'apply' && !pinHash && (<>
-            <p className="text-[13px] text-slate-600">This prints the company stamp and the authorised signature on the letter.</p>
-            <label className="flex items-start gap-2 text-[13px]"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#1E3553]" />I confirm the signatory has approved this document and I am authorised to apply the stamp.</label>
-            <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 space-y-2">
-              <div className="text-[12px] font-semibold text-navy">Optional: set a 4-digit PIN for next time</div>
-              <div className="grid grid-cols-2 gap-2">
-                <Input type="password" inputMode="numeric" maxLength={4} placeholder="New PIN" value={pinNew} onChange={(e) => setPinNew(e.target.value.replace(/\D/g, ''))} />
-                <Input type="password" inputMode="numeric" maxLength={4} placeholder="Repeat PIN" value={pinNew2} onChange={(e) => setPinNew2(e.target.value.replace(/\D/g, ''))} />
-              </div>
-            </div>
-          </>)}
-          {(gate === 'remove' || (gate === 'apply' && pinHash)) && (
-            <Field label="Enter 4-digit PIN"><Input type="password" inputMode="numeric" maxLength={4} autoFocus value={pinIn} onChange={(e) => setPinIn(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') confirmGate(); }} /></Field>
-          )}
-          {gateErr && <div className="text-[12px] text-red-700 bg-red-50 border border-red-200 rounded-md p-2">{gateErr}</div>}
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <button type="button" onClick={() => setGate(null)} className="border border-slate-300 text-slate-600 font-semibold text-sm py-2.5 rounded-lg">Cancel</button>
-            <button type="button" onClick={confirmGate} className="bg-navy text-white font-semibold text-sm py-2.5 rounded-lg">{gate === 'remove' ? 'Remove PIN' : 'Apply stamp'}</button>
-          </div>
-        </Modal>
-      )}
+
     </div>
   );
 }

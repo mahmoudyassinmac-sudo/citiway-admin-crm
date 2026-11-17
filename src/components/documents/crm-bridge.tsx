@@ -3,7 +3,9 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { issueFinanceDocument } from "@/app/(app)/documents/actions";
-import { ALL_DOC_TYPES, type AnyDocType } from "@/lib/permissions";
+import { ALL_DOC_TYPES, ALL_DOC_LABELS, type AnyDocType } from "@/lib/permissions";
+import { archiveOnScreenDocument } from "@/components/documents/archive";
+import { useSignoff } from "@/components/documents/signoff";
 
 const CanIssueContext = createContext(true);
 
@@ -25,7 +27,7 @@ export interface FinanceRecord {
 }
 
 
-export interface SaveResult { ok: boolean; message: string }
+export interface SaveResult { ok: boolean; message: string; id?: string | null }
 
 /**
  * Issues the document through a server action: it upserts into finance_documents (unique on
@@ -45,7 +47,7 @@ export async function saveFinanceDocument(r: FinanceRecord): Promise<SaveResult>
       dueDate: r.dueDate,
     });
     return res.ok
-      ? { ok: true, message: res.message }
+      ? { ok: true, message: res.message, id: res.id }
       : { ok: false, message: `Could not save ${r.docNo || "the document"} to the CRM: ${res.error}` };
   } catch (e) {
     return { ok: false, message: `Could not reach the CRM: ${e instanceof Error ? e.message : "network error"}` };
@@ -64,12 +66,25 @@ export function useIssueDocument(getRecord: () => FinanceRecord | null) {
   });
   const [note, setNote] = useState("");
   const canIssue = useCanIssue();
+  const { mode } = useSignoff();
   const issue = async (): Promise<boolean> => {
     const rec = ref.current();
     if (!rec) return true;
+    setNote("Saving…");
     const res = await saveFinanceDocument(rec);
-    setNote(res.message);
-    return res.ok;
+    if (!res.ok || !res.id) {
+      setNote(res.message);
+      return res.ok;
+    }
+    setNote(`${res.message} Archiving the PDF…`);
+    const arc = await archiveOnScreenDocument({
+      table: "finance_documents",
+      id: res.id,
+      title: `${ALL_DOC_LABELS[rec.docType] ?? "Document"} ${rec.docNo}`,
+      mode,
+    });
+    setNote(`${res.message} ${arc.message}`);
+    return true; // the record is saved — printing may proceed even if archiving failed
   };
   return { note, issue, canIssue };
 }

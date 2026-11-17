@@ -2,6 +2,7 @@
 // @ts-nocheck — ported from the original single-file Citiway tool (Project Knowledge/citiway-receipt.html)
 'use client';
 import { PartyPicker, useIssueDocument } from '@/components/documents/crm-bridge';
+import { StampSlot } from '@/components/documents/signoff';
 import React, { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback, Fragment } from 'react';
 
 
@@ -213,7 +214,9 @@ function Receipt({ d, calc }) {
         </div>
         <div style={{ width: '68mm' }}>
           <div className="font-head font-semibold text-navy uppercase" style={{ fontSize: '8.6pt', letterSpacing: '.06em' }}>Signature / Stamp</div>
-          <div style={{ marginTop: '2mm', height: '24mm', border: '1px dashed #9DB8DE', borderRadius: '6px', background: '#FAFCFE' }} />
+          <div style={{ marginTop: '2mm', height: '24mm', border: '1px dashed #9DB8DE', borderRadius: '6px', background: '#FAFCFE', position: 'relative' }}>
+            <StampSlot align="center" style={{ inset: '1mm' }} />
+          </div>
         </div>
       </div>
 

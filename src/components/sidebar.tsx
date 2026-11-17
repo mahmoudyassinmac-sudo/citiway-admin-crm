@@ -11,11 +11,13 @@ import {
   LogOut,
   Receipt,
   Settings,
+  Stamp,
   UserCheck,
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isAdminOrAbove, type ModuleKey, type Role } from "@/lib/permissions";
+import { ROLE_LABEL } from "@/components/settings/permissions-editor";
 
 interface NavItem {
   href: string;
@@ -26,6 +28,7 @@ interface NavItem {
   /** Shown when ANY of these modules is enabled (admins see all). */
   anyModule?: ModuleKey[];
   adminOnly?: boolean;
+  superAdminOnly?: boolean;
 }
 
 const NAV: NavItem[] = [
@@ -37,6 +40,7 @@ const NAV: NavItem[] = [
   { href: "/deals", label: "Clients & Deals", icon: Handshake, module: "deals" },
   // Own issued letters/invoices (admins & accountants with scope "all" see everyone's).
   { href: "/documents", label: "Documents", icon: Archive, anyModule: ["letters", "finance", "deals"] },
+  { href: "/approvals", label: "Approvals", icon: Stamp, superAdminOnly: true },
   { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
 
@@ -45,7 +49,9 @@ export function Sidebar({
   name,
   configured,
   modules,
+  pendingApprovals = 0,
 }: {
+  pendingApprovals?: number;
   role: Role;
   name: string;
   configured: boolean;
@@ -70,6 +76,7 @@ export function Sidebar({
       </div>
       <nav className="flex flex-row gap-1 overflow-x-auto px-3 pb-3 md:flex-1 md:flex-col md:overflow-y-auto">
         {NAV.filter((n) => {
+          if (n.superAdminOnly) return role === "super_admin";
           if (n.adminOnly) return isAdminOrAbove(role);
           if (isAdminOrAbove(role)) return true;
           if (n.module) return modules[n.module];
@@ -95,13 +102,16 @@ export function Sidebar({
                 }`}
               />
               {n.label}
+              {n.href === "/approvals" && pendingApprovals > 0 && (
+                <span className="ml-auto rounded-full bg-amber-500 px-1.5 text-[11px] font-bold text-white">{pendingApprovals}</span>
+              )}
             </Link>
           );
         })}
       </nav>
       <div className="mx-3 mb-4 hidden rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-xs md:block">
         <div className="truncate font-semibold">{name}</div>
-        <div className="mb-2.5 capitalize text-white/55">{configured ? role : "setup required"}</div>
+        <div className="mb-2.5 text-white/55">{configured ? ROLE_LABEL[role] : "setup required"}</div>
         {configured && (
           <button
             onClick={signOut}

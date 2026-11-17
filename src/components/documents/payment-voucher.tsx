@@ -2,6 +2,7 @@
 // @ts-nocheck — ported from the original single-file Citiway tool (Project Knowledge/citiway-payment-voucher.html)
 'use client';
 import { useIssueDocument } from '@/components/documents/crm-bridge';
+import { StampSlot } from '@/components/documents/signoff';
 import React, { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback, Fragment } from 'react';
 
 
@@ -191,7 +192,8 @@ function Voucher({ d, calc }) {
       <div className="flex justify-between" style={{ marginTop: '5mm', gap: '12mm' }}>
         <div style={{ flex: 1 }}>
           <div className="font-head font-semibold text-navy uppercase" style={sigLabel}>Prepared / Approved By</div>
-          <div style={sigBox} className="flex items-end justify-end p-[2mm]">
+          <div style={{ ...sigBox, position: 'relative' }} className="flex items-end justify-end p-[2mm]">
+            <StampSlot align="center" style={{ inset: '1mm' }} />
             <span style={{ fontSize: '7pt', color: '#9DB8DE' }}>Signature &amp; Company Stamp</span>
           </div>
           <div style={sigLine} className="font-medium">

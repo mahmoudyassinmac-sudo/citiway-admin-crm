@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { BrandAssets } from "@/components/settings/brand-assets";
 import { CompanyForm } from "@/components/settings/company-form";
 import { UsersManager, type AgentOption, type UserRow } from "@/components/settings/users-manager";
 import { getSession } from "@/lib/auth";
@@ -29,6 +30,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     if (tab === "company") {
       const { data } = await admin.from("company_settings").select("*").eq("id", 1).maybeSingle();
       body = (
+        <>
         <CompanyForm
           initial={{
             company_name: data?.company_name ?? "",
@@ -41,6 +43,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             admin_alert_email: data?.admin_alert_email ?? "",
           }}
         />
+        <BrandAssets
+          stampCustom={!!data?.stamp_image_path}
+          signatureCustom={!!data?.signature_image_path}
+          version={`${data?.stamp_image_path ?? "builtin"}-${data?.signature_image_path ?? "none"}`}
+        />
+        </>
       );
     } else {
       const [profiles, agentsRes, authUsers] = await Promise.all([

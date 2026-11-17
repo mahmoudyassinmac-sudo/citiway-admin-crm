@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { DocumentHost } from "@/components/documents/host";
 import { getSession } from "@/lib/auth";
+import { stampImageKinds } from "@/lib/brand";
 import { getCompany } from "@/lib/company";
 import { DOCUMENT_TOOLS, findTool, toolsFor } from "@/lib/documents";
 import { getLookups } from "@/lib/lookups";
@@ -38,11 +39,21 @@ export default async function DocumentToolPage({
       .maybeSingle();
     return data;
   };
-  const [company, { clients, developers }, deal] = await Promise.all([getCompany(), getLookups(), loadDeal()]);
+  const isSuperAdmin = session.role === "super_admin" && session.configured;
+  const [company, { clients, developers }, deal, stampKinds] = await Promise.all([
+    getCompany(),
+    getLookups(),
+    loadDeal(),
+    isSuperAdmin && tool.stampable ? stampImageKinds() : Promise.resolve(["stamp" as const]),
+  ]);
 
   const { Component } = tool;
   return (
-    <DocumentHost css={tool.css} canIssue={tool.docType ? session.permissions.can_create_finance : true}>
+    <DocumentHost
+      css={tool.css}
+      canIssue={tool.docType ? session.permissions.can_create_finance : true}
+      signoff={{ isSuperAdmin, stampKinds, stampable: tool.stampable }}
+    >
       <Component
         company={company}
         clients={clients}

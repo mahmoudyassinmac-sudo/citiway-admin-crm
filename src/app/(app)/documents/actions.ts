@@ -3,10 +3,11 @@
 import { getSession } from "@/lib/auth";
 import { sendDocumentAlert, type Issuer } from "@/lib/notifications/sendDocumentAlert";
 import { ALL_DOC_TYPES, type AnyDocType } from "@/lib/permissions";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type IssueResult =
-  | { ok: true; message: string }
+  | { ok: true; message: string; id: string | null }
   | { ok: false; error: string; duplicate?: boolean };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -63,8 +64,20 @@ export async function issueFinanceDocument(input: FinanceIssueInput): Promise<Is
     due_date: typeof input.dueDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input.dueDate) ? input.dueDate : null,
   };
 
-  const { error } = await supabase.from("finance_documents").upsert(row, { onConflict: "doc_type,doc_no" });
+  const { data: saved, error } = await supabase
+    .from("finance_documents")
+    .upsert(row, { onConflict: "doc_type,doc_no" })
+    .select("id")
+    .single();
   if (error) return { ok: false, error: error.message };
+  const id = (saved?.id as string | undefined) ?? null;
+  // Re-issuing replaces the document: any earlier PDF / stamp no longer matches its content.
+  if (id) {
+    await createAdminClient()
+      .from("finance_documents")
+      .update({ pdf_path: null, pdf_uploaded_at: null, signed_pdf_path: null, stamp_anchor: null, signoff_status: "none", signoff_requested_by: null, signoff_requested_at: null, signed_by: null, signed_at: null, signoff_note: null })
+      .eq("id", id);
+  }
 
   // Awaited so the serverless function doesn't stop before the email is out; never throws.
   await sendDocumentAlert({
@@ -84,7 +97,7 @@ export async function issueFinanceDocument(input: FinanceIssueInput): Promise<Is
     agentId: row.agent_id,
   });
 
-  return { ok: true, message: `${docNo} issued and saved to the CRM (Finance documents).` };
+  return { ok: true, id, message: `${docNo} issued and saved to the CRM (Finance documents).` };
 }
 
 /* --------------------------------- letters --------------------------------- */
@@ -117,7 +130,7 @@ export async function issueLetter(input: LetterIssueInput): Promise<IssueResult>
     agent_id: optUuid(input.agentId),
   };
 
-  const { error } = await (await createClient()).from("letters").insert(row);
+  const { data: saved, error } = await (await createClient()).from("letters").insert(row).select("id").single();
   if (error) return error.code === "23505" ? { ok: false, error: "already issued", duplicate: true } : { ok: false, error: error.message };
 
   await sendDocumentAlert({
@@ -136,5 +149,5 @@ export async function issueLetter(input: LetterIssueInput): Promise<IssueResult>
     agentId: row.agent_id,
   });
 
-  return { ok: true, message: `${row.ref_no} issued and saved to the CRM.` };
+  return { ok: true, id: (saved?.id as string | undefined) ?? null, message: `${row.ref_no} issued and saved to the CRM.` };
 }

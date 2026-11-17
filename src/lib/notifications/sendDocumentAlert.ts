@@ -106,7 +106,7 @@ function htmlToPreview(html: string | null, max = 700): string {
   return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
 }
 
-function appUrl(): string {
+export function appUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_APP_URL;
   if (explicit) return explicit.replace(/\/$/, "");
   const host = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
@@ -309,6 +309,24 @@ export async function sendDocumentAlert(alert: DocumentAlert): Promise<DeliveryR
     console.error("[sendDocumentAlert]", result);
   }
   return result;
+}
+
+/** Plain email to the admin alert address (e.g. "a document is waiting for your stamp"). Never throws. */
+export async function sendAdminNotice(subject: string, html: string): Promise<string> {
+  try {
+    const { data } = await createAdminClient()
+      .from("company_settings")
+      .select("admin_alert_email")
+      .eq("id", 1)
+      .maybeSingle();
+    const to = (data?.admin_alert_email as string | null)?.trim();
+    if (!to) return "skipped: no admin alert email is set";
+    const r = await sendViaResend(to, subject, html);
+    if (r.startsWith("failed")) console.error("[sendAdminNotice]", r);
+    return r;
+  } catch (e) {
+    return `failed: ${e instanceof Error ? e.message : "unexpected error"}`;
+  }
 }
 
 /** Sample alert used by the "Send Test Email" button. */

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FileText, Receipt, Handshake } from "lucide-react";
+import { ArchiveCell, type ArchiveInfo } from "@/components/documents/pdf-actions";
 
 export interface LetterRow {
   id: string;
@@ -15,6 +16,7 @@ export interface LetterRow {
   developer_name: string | null;
   agent_name: string | null;
   issued_by: string | null;
+  archive: ArchiveInfo;
 }
 
 export interface FinanceRow {
@@ -30,6 +32,7 @@ export interface FinanceRow {
   client_name: string | null;
   developer_name: string | null;
   issued_by: string | null;
+  archive: ArchiveInfo;
 }
 
 const aed = (n: number) =>
@@ -50,6 +53,7 @@ export function DocumentsBrowser({
   showLetters,
   showFinance,
   showDeals,
+  isSuperAdmin,
 }: {
   letters: LetterRow[];
   financeDocs: FinanceRow[];
@@ -57,6 +61,7 @@ export function DocumentsBrowser({
   showLetters: boolean;
   showFinance: boolean;
   showDeals: boolean;
+  isSuperAdmin: boolean;
 }) {
   const [tab, setTab] = useState<"letters" | "finance" | "deals">(showLetters ? "letters" : showFinance ? "finance" : "deals");
   const [openLetter, setOpenLetter] = useState<LetterRow | null>(null);
@@ -115,9 +120,12 @@ export function DocumentsBrowser({
                     <td className="px-4 py-3 text-slate-600">{l.issued_by ?? "—"}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-slate-500">{fmt(l.created_at)}</td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => setOpenLetter(l)} className="text-xs font-semibold text-brand underline">
-                        View
-                      </button>
+                      <div className="flex flex-col items-end gap-1.5">
+                        <button onClick={() => setOpenLetter(l)} className="text-xs font-semibold text-slate-500 underline">
+                          Details
+                        </button>
+                        <ArchiveCell table="letters" id={l.id} reference={l.ref_no} info={l.archive} isSuperAdmin={isSuperAdmin} />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -141,6 +149,7 @@ export function DocumentsBrowser({
                   <th className="px-4 py-3">Total</th>
                   <th className="px-4 py-3">Issued by</th>
                   <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3 text-right">PDF</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -152,6 +161,9 @@ export function DocumentsBrowser({
                     <td className="px-4 py-3 font-medium text-navy">{aed(d.total_aed)}</td>
                     <td className="px-4 py-3 text-slate-600">{d.issued_by ?? "—"}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-slate-500">{fmt(d.created_at)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <ArchiveCell table="finance_documents" id={d.id} reference={d.doc_no} info={d.archive} isSuperAdmin={isSuperAdmin} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -173,6 +185,7 @@ export function DocumentsBrowser({
                   <th className="px-4 py-3">Client / Developer</th>
                   <th className="px-4 py-3">Issued by</th>
                   <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3 text-right">PDF</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -183,6 +196,9 @@ export function DocumentsBrowser({
                     <td className="px-4 py-3 text-slate-600">{d.client_name || d.developer_name || "—"}</td>
                     <td className="px-4 py-3 text-slate-600">{d.issued_by ?? "—"}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-slate-500">{fmt(d.created_at)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <ArchiveCell table="finance_documents" id={d.id} reference={d.doc_no} info={d.archive} isSuperAdmin={isSuperAdmin} />
+                    </td>
                   </tr>
                 ))}
               </tbody>

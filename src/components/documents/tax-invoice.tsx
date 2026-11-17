@@ -2,6 +2,7 @@
 // @ts-nocheck — ported from the original single-file Citiway tool (Project Knowledge/citiway-tax-invoice.html)
 'use client';
 import { PartyPicker, useIssueDocument } from '@/components/documents/crm-bridge';
+import { StampSlot } from '@/components/documents/signoff';
 import React, { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback, Fragment } from 'react';
 
 
@@ -228,7 +229,8 @@ function Invoice({ d, rows, totals }) {
 
           {/* Signatory */}
           <div className="flex-1 flex flex-col items-center justify-end" style={{ marginTop: '3mm' }}>
-            <div style={{ height: '31mm', width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+            <div style={{ height: '31mm', width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', position: 'relative' }}>
+              <StampSlot align="center" style={{ left: 0, right: 0, top: '1mm', bottom: '0.5mm' }} />
             </div>
             <div style={{ width: '100%', borderTop: '1px solid #7AA3D8', marginTop: '1mm', paddingTop: '1.2mm', textAlign: 'center', fontSize: '7.8pt' }}>
               <div className="font-head font-semibold text-navy uppercase" style={{ letterSpacing: '.06em', fontSize: '7.6pt' }}>Authorized Signatory &amp; Stamp</div>

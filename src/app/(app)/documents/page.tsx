@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { DEALS_DOC_TYPES, isAdminOrAbove } from "@/lib/permissions";
 import { DocumentsBrowser, type FinanceRow, type LetterRow } from "@/components/documents/documents-browser";
+import type { ArchiveInfo } from "@/components/documents/pdf-actions";
+import type { SignoffStatus } from "@/lib/signoff";
 
 export const metadata = { title: "Documents — Citiway CRM" };
 
@@ -35,7 +37,7 @@ type LetterJoined = {
   created_by: string | null;
   developer: { developer_name: string } | { developer_name: string }[] | null;
   agent: { full_name: string } | { full_name: string }[] | null;
-};
+} & ArchiveCols;
 
 type FinanceJoined = {
   id: string;
@@ -50,7 +52,26 @@ type FinanceJoined = {
   created_by: string | null;
   client: { full_name: string } | { full_name: string }[] | null;
   developer: { developer_name: string } | { developer_name: string }[] | null;
+} & ArchiveCols;
+
+type ArchiveCols = {
+  pdf_path: string | null;
+  signed_pdf_path: string | null;
+  stamp_anchor: unknown;
+  signoff_status: SignoffStatus | null;
+  signoff_note: string | null;
 };
+
+const ARCHIVE_COLS = "pdf_path, signed_pdf_path, stamp_anchor, signoff_status, signoff_note";
+
+function archiveInfo(r: ArchiveCols): ArchiveInfo {
+  return {
+    has_pdf: !!(r.signed_pdf_path || r.pdf_path),
+    signoff_status: r.signoff_status ?? "none",
+    signoff_note: r.signoff_note,
+    stampable: !!r.stamp_anchor,
+  };
+}
 
 /** Supabase returns a to-one FK join as an object normally, but as an array in some query shapes — handle both. */
 const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] ?? null : v);
@@ -73,7 +94,7 @@ export default async function DocumentsPage() {
         ? supabase
             .from("letters")
             .select(
-              "id, ref_no, template_type, language, recipient, subject, body_html, created_at, created_by, developer:developers(developer_name), agent:agents(full_name)",
+              `id, ref_no, template_type, language, recipient, subject, body_html, created_at, created_by, ${ARCHIVE_COLS}, developer:developers(developer_name), agent:agents(full_name)`,
             )
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] as LetterJoined[] }),
@@ -84,7 +105,7 @@ export default async function DocumentsPage() {
         ? supabase
             .from("finance_documents")
             .select(
-              "id, doc_type, doc_no, amount_aed, vat_aed, total_aed, status, due_date, created_at, created_by, client:clients(full_name), developer:developers(developer_name)",
+              `id, doc_type, doc_no, amount_aed, vat_aed, total_aed, status, due_date, created_at, created_by, ${ARCHIVE_COLS}, client:clients(full_name), developer:developers(developer_name)`,
             )
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] as FinanceJoined[] }),
@@ -123,6 +144,7 @@ export default async function DocumentsPage() {
       developer_name: one(row.developer)?.developer_name ?? null,
       agent_name: one(row.agent)?.full_name ?? null,
       issued_by: (row.created_by && names.get(row.created_by)) ?? null,
+      archive: archiveInfo(row),
     }));
 
     financeDocs = financeData.map((row) => ({
@@ -138,6 +160,7 @@ export default async function DocumentsPage() {
       client_name: one(row.client)?.full_name ?? null,
       developer_name: one(row.developer)?.developer_name ?? null,
       issued_by: (row.created_by && names.get(row.created_by)) ?? null,
+      archive: archiveInfo(row),
     }));
 
     dealsDocs = dealsData.map((row) => ({
@@ -153,6 +176,7 @@ export default async function DocumentsPage() {
       client_name: one(row.client)?.full_name ?? null,
       developer_name: one(row.developer)?.developer_name ?? null,
       issued_by: (row.created_by && names.get(row.created_by)) ?? null,
+      archive: archiveInfo(row),
     }));
   }
 
@@ -171,6 +195,7 @@ export default async function DocumentsPage() {
         showLetters={canSeeLetters}
         showFinance={canSeeFinance}
         showDeals={canSeeDeals}
+        isSuperAdmin={session.role === "super_admin"}
       />
     </div>
   );

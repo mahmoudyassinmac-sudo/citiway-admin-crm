@@ -18,7 +18,7 @@ export function RoleBadge({ role }: { role: Role }) {
     role === "super_admin" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-[0_4px_12px_-4px_rgba(180,130,10,0.6)]"
     : role === "admin" ? "bg-gradient-to-r from-navy to-[#3d64a0] text-white shadow-[0_4px_12px_-4px_rgba(30,53,83,0.6)]"
     : role === "accountant" ? "bg-brand-soft text-navy" : "bg-emerald-50 text-emerald-700";
-  return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}>{ROLE_LABEL[role]}</span>;
+  return <span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}>{ROLE_LABEL[role]}</span>;
 }
 
 function Check({ label, checked, onChange, disabled }: { label: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {

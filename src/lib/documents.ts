@@ -24,6 +24,8 @@ export interface DocumentTool {
   group: "Finance" | "Deals & Marketing";
   /** Finance document type this tool produces (gated by finance_docs). Tools without one follow the Deals module. */
   docType: DocType | null;
+  /** Has a company "signature & stamp" area the Super Admin can stamp. */
+  stampable: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Component: ComponentType<any>;
   css: string;
@@ -31,14 +33,14 @@ export interface DocumentTool {
 
 
 export const DOCUMENT_TOOLS: DocumentTool[] = [
-  { slug: "tax-invoice", title: "Tax Invoice", description: "UAE 5% VAT commission invoice showing the agency TRN.", group: "Finance", docType: "tax_invoice", Component: TaxInvoice, css: taxCss },
-  { slug: "receipt", title: "Payment Receipt", description: "Receipt for cash, cheque or transfer payments.", group: "Finance", docType: "receipt", Component: Receipt, css: receiptCss },
-  { slug: "tenancy-contract", title: "Tenancy Contract", description: "Dubai Unified Tenancy Contract generator.", group: "Finance", docType: "rental_contract", Component: TenancyContract, css: tenancyCss },
-  { slug: "payment-voucher", title: "Payment Voucher", description: "Outgoing payment voucher with approvals.", group: "Finance", docType: "payment_voucher", Component: PaymentVoucher, css: voucherCss },
-  { slug: "adnoc-invoice", title: "ADNOC Tax Invoice", description: "ADNOC-format commission tax invoice.", group: "Finance", docType: "tax_invoice", Component: AdnocInvoice, css: adnocCss },
-  { slug: "deal-proposal", title: "Property & Deal Proposal", description: "Client-facing proposal with payment plan and QR code.", group: "Deals & Marketing", docType: null, Component: DealProposal, css: dealCss },
-  { slug: "unit-handover", title: "Unit Handover & Inspection", description: "Snagging / handover inspection form.", group: "Deals & Marketing", docType: null, Component: UnitHandover, css: handoverCss },
-  { slug: "marketing-approval", title: "Marketing Approval", description: "Marketing material approval request.", group: "Deals & Marketing", docType: null, Component: MarketingApproval, css: marketingCss },
+  { slug: "tax-invoice", title: "Tax Invoice", description: "UAE 5% VAT commission invoice showing the agency TRN.", group: "Finance", docType: "tax_invoice", stampable: true, Component: TaxInvoice, css: taxCss },
+  { slug: "receipt", title: "Payment Receipt", description: "Receipt for cash, cheque or transfer payments.", group: "Finance", docType: "receipt", stampable: true, Component: Receipt, css: receiptCss },
+  { slug: "tenancy-contract", title: "Tenancy Contract", description: "Dubai Unified Tenancy Contract generator.", group: "Finance", docType: "rental_contract", stampable: false, Component: TenancyContract, css: tenancyCss },
+  { slug: "payment-voucher", title: "Payment Voucher", description: "Outgoing payment voucher with approvals.", group: "Finance", docType: "payment_voucher", stampable: true, Component: PaymentVoucher, css: voucherCss },
+  { slug: "adnoc-invoice", title: "ADNOC Tax Invoice", description: "ADNOC-format commission tax invoice.", group: "Finance", docType: "tax_invoice", stampable: false, Component: AdnocInvoice, css: adnocCss },
+  { slug: "deal-proposal", title: "Property & Deal Proposal", description: "Client-facing proposal with payment plan and QR code.", group: "Deals & Marketing", docType: null, stampable: false, Component: DealProposal, css: dealCss },
+  { slug: "unit-handover", title: "Unit Handover & Inspection", description: "Snagging / handover inspection form.", group: "Deals & Marketing", docType: null, stampable: false, Component: UnitHandover, css: handoverCss },
+  { slug: "marketing-approval", title: "Marketing Approval", description: "Marketing material approval request.", group: "Deals & Marketing", docType: null, stampable: false, Component: MarketingApproval, css: marketingCss },
 ];
 
 export const findTool = (slug: string) => DOCUMENT_TOOLS.find((t) => t.slug === slug);

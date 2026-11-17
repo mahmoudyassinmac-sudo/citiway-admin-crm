@@ -1,11 +1,13 @@
 import { Sidebar } from "@/components/sidebar";
 import { getSession } from "@/lib/auth";
+import { countPendingApprovals } from "@/lib/approvals";
 import { AlertTriangle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
+  const pendingApprovals = session.configured && session.role === "super_admin" ? await countPendingApprovals() : 0;
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <Sidebar
@@ -13,6 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         name={session.fullName ?? session.email ?? "Guest"}
         configured={session.configured}
         modules={session.permissions.modules}
+        pendingApprovals={pendingApprovals}
       />
       <div className="min-w-0 flex-1">
         {!session.configured && (
