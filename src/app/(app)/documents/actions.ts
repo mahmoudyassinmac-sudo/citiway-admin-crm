@@ -2,7 +2,7 @@
 
 import { getSession } from "@/lib/auth";
 import { sendDocumentAlert, type Issuer } from "@/lib/notifications/sendDocumentAlert";
-import { DOC_TYPES, type DocType } from "@/lib/permissions";
+import { ALL_DOC_TYPES, type AnyDocType } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 export type IssueResult =
@@ -25,7 +25,7 @@ async function issuerFrom(): Promise<Issuer | null> {
 /* ------------------------------ finance documents ------------------------------ */
 
 export interface FinanceIssueInput {
-  docType: DocType;
+  docType: AnyDocType;
   docNo: string;
   amount: number;
   vat: number;
@@ -42,7 +42,7 @@ export interface FinanceIssueInput {
 export async function issueFinanceDocument(input: FinanceIssueInput): Promise<IssueResult> {
   const issuer = await issuerFrom();
   if (!issuer) return { ok: false, error: "You are not signed in." };
-  if (!DOC_TYPES.includes(input.docType)) return { ok: false, error: "Unknown document type." };
+  if (!ALL_DOC_TYPES.includes(input.docType)) return { ok: false, error: "Unknown document type." };
   const docNo = String(input.docNo ?? "").trim().slice(0, 80);
   if (!docNo) return { ok: false, error: "The document number is empty." };
 

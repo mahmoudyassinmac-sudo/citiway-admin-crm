@@ -59,6 +59,9 @@ const DOC_CATEGORY: Record<string, string> = {
   tax_invoice: "Tax Invoice",
   payment_voucher: "Payment Voucher",
   other: "Other Document",
+  deal_proposal: "Property & Deal Proposal",
+  unit_handover: "Unit Handover & Inspection Form",
+  marketing_approval: "Marketing Approval",
 };
 
 /* ---------------------------------------------------------------- helpers */

@@ -2,6 +2,7 @@
 // @ts-nocheck — ported from the original single-file Citiway tool (Project Knowledge/citiway-marketing-approval Update .html)
 'use client';
 import React, { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback, Fragment } from 'react';
+import { useIssueDocument } from '@/components/documents/crm-bridge';
 
 
 const LOGO = "/assets/citiway-logo.png";
@@ -305,6 +306,14 @@ function App() {
       setPrintMsg('Printing is blocked in this viewer — open the .html file in your browser and press Ctrl/Cmd + P.');
     }
   };
+  const { note: crmNote, issue, canIssue } = useIssueDocument(() => ({
+    docType: 'marketing_approval',
+    docNo: d.refNo,
+    amount: calc.amount,
+    vat: 0,
+    total: calc.amount,
+  }));
+  const issueAndPrint = async () => { if (await issue()) doPrint(); };
 
   return (
     <div className="min-h-screen">
@@ -314,11 +323,13 @@ function App() {
             <div className="font-head font-bold tracking-wide">Marketing Approval Generator</div>
             <div className="text-[12px] text-blue-100">Template #3 · Owner Authorization to Market Property</div>
           </div>
-          <button onClick={doPrint} className="ml-auto btn-brand text-navy font-semibold text-sm px-4 py-2 rounded-lg">
+          {canIssue && <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto btn-success text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>}
+          <button onClick={doPrint} title="Print a draft without recording it" className="btn-brand text-navy font-semibold text-sm px-4 py-2 rounded-lg">
             Print / Save as PDF
           </button>
         </div>
         {printMsg && <div className="max-w-[1500px] mx-auto px-5 pb-3 text-[12px] text-blue-100">{printMsg}</div>}
+        {crmNote && <div className="no-print max-w-[1500px] mx-auto px-5 pb-3 text-[12px] text-blue-100">{crmNote}</div>}
       </header>
 
       <main className="max-w-[1500px] mx-auto p-5 grid gap-5 lg:grid-cols-[440px_1fr] items-start">

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { issueFinanceDocument } from "@/app/(app)/documents/actions";
+import { ALL_DOC_TYPES, type AnyDocType } from "@/lib/permissions";
 
 const CanIssueContext = createContext(true);
 
@@ -13,7 +14,7 @@ export function CanIssueProvider({ value, children }: { value: boolean; children
 export const useCanIssue = () => useContext(CanIssueContext);
 
 export interface FinanceRecord {
-  docType: "tax_invoice" | "receipt" | "rental_contract" | "payment_voucher" | "other";
+  docType: AnyDocType;
   docNo: string;
   amount: number;
   vat: number;
@@ -34,7 +35,7 @@ export async function saveFinanceDocument(r: FinanceRecord): Promise<SaveResult>
   if (!isSupabaseConfigured()) return { ok: true, message: "CRM not connected — document was not recorded." };
   try {
     const res = await issueFinanceDocument({
-      docType: r.docType === "tax_invoice" || r.docType === "receipt" || r.docType === "rental_contract" || r.docType === "payment_voucher" ? r.docType : "other",
+      docType: ALL_DOC_TYPES.includes(r.docType) ? r.docType : "other",
       docNo: r.docNo,
       amount: r.amount,
       vat: r.vat,

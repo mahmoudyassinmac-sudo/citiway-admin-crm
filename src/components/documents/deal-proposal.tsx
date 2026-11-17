@@ -3,6 +3,7 @@
 'use client';
 import React, { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback, Fragment } from 'react';
 import qrcode from 'qrcode-generator';
+import { useIssueDocument } from '@/components/documents/crm-bridge';
 
 
 const LOGO = "/assets/citiway-logo.png";
@@ -397,6 +398,14 @@ function App() {
     try { window.print(); setPrintMsg('If no print dialog appeared, this viewer blocks printing — open the .html file in Chrome/Edge and press Ctrl/Cmd + P.'); }
     catch (e) { setPrintMsg('Printing is blocked in this viewer — open the .html file in your browser and press Ctrl/Cmd + P.'); }
   };
+  const { note: crmNote, issue, canIssue } = useIssueDocument(() => ({
+    docType: 'deal_proposal',
+    docNo: d.ref,
+    amount: sale ? c.P : c.R,
+    vat: 0,
+    total: sale ? c.total : c.moveIn,
+  }));
+  const issueAndPrint = async () => { if (await issue()) doPrint(); };
 
   return (
     <div className="min-h-screen">
@@ -406,9 +415,11 @@ function App() {
             <div className="font-head font-bold tracking-wide">Property &amp; Deal Proposal</div>
             <div className="text-[12px] text-blue-100">Template #9 · Sale / Off-Plan / Rental · 1-page A4</div>
           </div>
-          <button onClick={doPrint} className="ml-auto btn-brand text-navy font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Print / Save as PDF</button>
+          {canIssue && <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto btn-success text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>}
+          <button onClick={doPrint} title="Print a draft without recording it" className="btn-brand text-navy font-semibold text-sm px-4 py-2 rounded-lg">Print / Save as PDF</button>
         </div>
         {printMsg && <div className="max-w-[1500px] mx-auto px-5 pb-3 text-[12px] text-blue-100">{printMsg}</div>}
+        {crmNote && <div className="no-print max-w-[1500px] mx-auto px-5 pb-3 text-[12px] text-blue-100">{crmNote}</div>}
       </header>
 
       <main className="max-w-[1500px] mx-auto p-5 grid gap-5 lg:grid-cols-[470px_1fr] items-start">

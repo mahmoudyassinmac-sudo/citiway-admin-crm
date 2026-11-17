@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Receipt } from "lucide-react";
+import { FileText, Receipt, Handshake } from "lucide-react";
 
 export interface LetterRow {
   id: string;
@@ -46,21 +46,26 @@ const fmt = (iso: string) =>
 export function DocumentsBrowser({
   letters,
   financeDocs,
+  dealsDocs,
   showLetters,
   showFinance,
+  showDeals,
 }: {
   letters: LetterRow[];
   financeDocs: FinanceRow[];
+  dealsDocs: FinanceRow[];
   showLetters: boolean;
   showFinance: boolean;
+  showDeals: boolean;
 }) {
-  const [tab, setTab] = useState<"letters" | "finance">(showLetters ? "letters" : "finance");
+  const [tab, setTab] = useState<"letters" | "finance" | "deals">(showLetters ? "letters" : showFinance ? "finance" : "deals");
   const [openLetter, setOpenLetter] = useState<LetterRow | null>(null);
 
   const tabs = [
     showLetters && { key: "letters" as const, label: "Letters", count: letters.length, icon: FileText },
     showFinance && { key: "finance" as const, label: "Invoices & Receipts", count: financeDocs.length, icon: Receipt },
-  ].filter(Boolean) as { key: "letters" | "finance"; label: string; count: number; icon: typeof FileText }[];
+    showDeals && { key: "deals" as const, label: "Deals & Marketing", count: dealsDocs.length, icon: Handshake },
+  ].filter(Boolean) as { key: "letters" | "finance" | "deals"; label: string; count: number; icon: typeof FileText }[];
 
   return (
     <div>
@@ -145,6 +150,37 @@ export function DocumentsBrowser({
                     <td className="px-4 py-3 capitalize text-slate-600">{d.doc_type.replace(/_/g, " ")}</td>
                     <td className="px-4 py-3 text-slate-600">{d.client_name || d.developer_name || "—"}</td>
                     <td className="px-4 py-3 font-medium text-navy">{aed(d.total_aed)}</td>
+                    <td className="px-4 py-3 text-slate-600">{d.issued_by ?? "—"}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-500">{fmt(d.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {tab === "deals" && showDeals && (
+        <div className="overflow-x-auto rounded-2xl glass">
+          {dealsDocs.length === 0 ? (
+            <p className="p-6 text-sm text-slate-400">No deals or marketing documents issued yet.</p>
+          ) : (
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs uppercase tracking-wide text-slate-400">
+                <tr>
+                  <th className="px-4 py-3">Doc. No.</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Client / Developer</th>
+                  <th className="px-4 py-3">Issued by</th>
+                  <th className="px-4 py-3">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {dealsDocs.map((d) => (
+                  <tr key={d.id} className="hover:bg-slate-50/60">
+                    <td className="px-4 py-3 font-semibold text-navy">{d.doc_no}</td>
+                    <td className="px-4 py-3 capitalize text-slate-600">{d.doc_type.replace(/_/g, " ")}</td>
+                    <td className="px-4 py-3 text-slate-600">{d.client_name || d.developer_name || "—"}</td>
                     <td className="px-4 py-3 text-slate-600">{d.issued_by ?? "—"}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-slate-500">{fmt(d.created_at)}</td>
                   </tr>

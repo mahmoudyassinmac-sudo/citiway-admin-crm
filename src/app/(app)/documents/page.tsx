@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { DEALS_DOC_TYPES } from "@/lib/permissions";
 import { DocumentsBrowser, type FinanceRow, type LetterRow } from "@/components/documents/documents-browser";
 
 export const metadata = { title: "Documents — Citiway CRM" };
@@ -58,10 +59,12 @@ export default async function DocumentsPage() {
   const session = await getSession();
   const canSeeLetters = session.permissions.modules.letters;
   const canSeeFinance = session.permissions.modules.finance;
-  if (!canSeeLetters && !canSeeFinance) redirect("/");
+  const canSeeDeals = session.permissions.modules.deals;
+  if (!canSeeLetters && !canSeeFinance && !canSeeDeals) redirect("/");
 
   let letters: LetterRow[] = [];
   let financeDocs: FinanceRow[] = [];
+  let dealsDocs: FinanceRow[] = [];
 
   if (session.configured) {
     const supabase = await createClient();
@@ -74,7 +77,10 @@ export default async function DocumentsPage() {
             )
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] as LetterJoined[] }),
-      canSeeFinance
+      // finance_documents also holds Deals & Marketing docs (deal_proposal, unit_handover,
+      // marketing_approval) — fetch once whenever either module is enabled; RLS scopes each
+      // row correctly per-branch, and we split them below by doc_type for display.
+      canSeeFinance || canSeeDeals
         ? supabase
             .from("finance_documents")
             .select(
@@ -85,12 +91,17 @@ export default async function DocumentsPage() {
     ]);
 
     const lettersData = (l.data ?? []) as LetterJoined[];
-    const financeData = (f.data ?? []) as FinanceJoined[];
+    const financeDataAll = (f.data ?? []) as FinanceJoined[];
+    const isDealsDoc = (t: string) => (DEALS_DOC_TYPES as readonly string[]).includes(t);
+    const financeData = financeDataAll.filter((row) => !isDealsDoc(row.doc_type));
+    const dealsData = financeDataAll.filter((row) => isDealsDoc(row.doc_type));
 
     // No direct FK from letters/finance_documents to profiles (both reference auth.users
     // independently), so PostgREST can't embed it — look names up ourselves, one query.
     const creatorIds = Array.from(
-      new Set([...lettersData.map((r) => r.created_by), ...financeData.map((r) => r.created_by)].filter(Boolean) as string[]),
+      new Set(
+        [...lettersData.map((r) => r.created_by), ...financeDataAll.map((r) => r.created_by)].filter(Boolean) as string[],
+      ),
     );
     const names = new Map<string, string>();
     if (creatorIds.length) {
@@ -128,6 +139,21 @@ export default async function DocumentsPage() {
       developer_name: one(row.developer)?.developer_name ?? null,
       issued_by: (row.created_by && names.get(row.created_by)) ?? null,
     }));
+
+    dealsDocs = dealsData.map((row) => ({
+      id: row.id,
+      doc_type: row.doc_type,
+      doc_no: row.doc_no,
+      amount_aed: row.amount_aed,
+      vat_aed: row.vat_aed,
+      total_aed: row.total_aed,
+      status: row.status,
+      due_date: row.due_date,
+      created_at: row.created_at,
+      client_name: one(row.client)?.full_name ?? null,
+      developer_name: one(row.developer)?.developer_name ?? null,
+      issued_by: (row.created_by && names.get(row.created_by)) ?? null,
+    }));
   }
 
   return (
@@ -135,10 +161,17 @@ export default async function DocumentsPage() {
       <h1 className="font-head text-2xl font-bold text-navy">Documents</h1>
       <p className="mb-8 mt-1 text-sm text-slate-500">
         {session.role === "admin" || session.role === "accountant"
-          ? "Every letter, invoice and receipt issued across the team."
-          : "Letters, invoices and receipts you've issued."}
+          ? "Every letter, invoice, receipt and deals document issued across the team."
+          : "Letters, invoices, receipts and deals documents you've issued."}
       </p>
-      <DocumentsBrowser letters={letters} financeDocs={financeDocs} showLetters={canSeeLetters} showFinance={canSeeFinance} />
+      <DocumentsBrowser
+        letters={letters}
+        financeDocs={financeDocs}
+        dealsDocs={dealsDocs}
+        showLetters={canSeeLetters}
+        showFinance={canSeeFinance}
+        showDeals={canSeeDeals}
+      />
     </div>
   );
 }

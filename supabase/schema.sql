@@ -138,11 +138,13 @@ create table if not exists public.letters (
 create index if not exists letters_created_idx on public.letters (created_at desc);
 
 -- ---------------------------------------------------------------------
--- 6. finance_documents  (invoices, receipts, contracts, vouchers)
+-- 6. finance_documents  (invoices, receipts, contracts, vouchers; also the shared archive for
+--    Deals & Marketing documents — deal_proposal, unit_handover, marketing_approval — which
+--    have no amount/VAT and are gated by modules.deals instead of the finance_docs toggles)
 -- ---------------------------------------------------------------------
 create table if not exists public.finance_documents (
   id           uuid primary key default gen_random_uuid(),
-  doc_type     text not null check (doc_type in ('tax_invoice','receipt','rental_contract','payment_voucher','other')),
+  doc_type     text not null check (doc_type in ('tax_invoice','receipt','rental_contract','payment_voucher','other','deal_proposal','unit_handover','marketing_approval')),
   doc_no       text not null,
   client_id    uuid references public.clients(id) on delete set null,
   developer_id uuid references public.developers(id) on delete set null,
@@ -444,14 +446,49 @@ create policy letters_update on public.letters for update to authenticated
   using (public.current_app_role() = 'admin') with check (public.current_app_role() = 'admin');
 create policy letters_delete on public.letters for delete to authenticated using (public.current_app_role() = 'admin');
 
--- finance_documents: module + per-document-type + scope
+-- finance_documents: module + per-document-type + scope.
+-- Deals & Marketing doc types (deal_proposal, unit_handover, marketing_approval) are gated by
+-- modules.deals instead, since they have no amount/VAT and aren't part of the finance_docs toggles.
 create policy finance_documents_select on public.finance_documents for select to authenticated
-  using (public.has_module('finance') and public.has_doc(doc_type) and (public.scope_all() or created_by = auth.uid()));
+  using (
+    (doc_type in ('deal_proposal', 'unit_handover', 'marketing_approval')
+      and public.has_module('deals')
+      and (public.scope_all() or created_by = auth.uid()))
+    or (doc_type not in ('deal_proposal', 'unit_handover', 'marketing_approval')
+      and public.has_module('finance')
+      and public.has_doc(doc_type)
+      and (public.scope_all() or created_by = auth.uid()))
+  );
 create policy finance_documents_insert on public.finance_documents for insert to authenticated
-  with check (public.has_module('finance') and public.can_create_finance() and public.has_doc(doc_type) and created_by = auth.uid());
+  with check (
+    (doc_type in ('deal_proposal', 'unit_handover', 'marketing_approval')
+      and public.has_module('deals')
+      and created_by = auth.uid())
+    or (doc_type not in ('deal_proposal', 'unit_handover', 'marketing_approval')
+      and public.has_module('finance')
+      and public.can_create_finance()
+      and public.has_doc(doc_type)
+      and created_by = auth.uid())
+  );
 create policy finance_documents_update on public.finance_documents for update to authenticated
-  using (public.has_module('finance') and public.can_create_finance() and public.has_doc(doc_type) and (public.scope_all() or created_by = auth.uid()))
-  with check (public.has_module('finance') and public.can_create_finance() and public.has_doc(doc_type));
+  using (
+    (doc_type in ('deal_proposal', 'unit_handover', 'marketing_approval')
+      and public.has_module('deals')
+      and (public.scope_all() or created_by = auth.uid()))
+    or (doc_type not in ('deal_proposal', 'unit_handover', 'marketing_approval')
+      and public.has_module('finance')
+      and public.can_create_finance()
+      and public.has_doc(doc_type)
+      and (public.scope_all() or created_by = auth.uid()))
+  )
+  with check (
+    (doc_type in ('deal_proposal', 'unit_handover', 'marketing_approval')
+      and public.has_module('deals'))
+    or (doc_type not in ('deal_proposal', 'unit_handover', 'marketing_approval')
+      and public.has_module('finance')
+      and public.can_create_finance()
+      and public.has_doc(doc_type))
+  );
 create policy finance_documents_delete on public.finance_documents for delete to authenticated
   using (public.current_app_role() = 'admin');
 

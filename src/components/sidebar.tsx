@@ -36,7 +36,7 @@ const NAV: NavItem[] = [
   { href: "/agents", label: "Agents & RERA", icon: UserCheck, module: "agents" },
   { href: "/deals", label: "Clients & Deals", icon: Handshake, module: "deals" },
   // Own issued letters/invoices (admins & accountants with scope "all" see everyone's).
-  { href: "/documents", label: "Documents", icon: Archive, anyModule: ["letters", "finance"] },
+  { href: "/documents", label: "Documents", icon: Archive, anyModule: ["letters", "finance", "deals"] },
   { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
 

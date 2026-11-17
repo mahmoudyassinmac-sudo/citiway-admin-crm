@@ -9,6 +9,28 @@ export type ModuleKey = (typeof MODULE_KEYS)[number];
 export const DOC_TYPES = ["rental_contract", "receipt", "tax_invoice", "payment_voucher", "other"] as const;
 export type DocType = (typeof DOC_TYPES)[number];
 
+/**
+ * Deals & Marketing documents (proposals, handover forms, marketing approvals) are stored in
+ * `finance_documents` too (for one shared archive) but gated by the Deals module, not by the
+ * per-document-type `finance_docs` toggles above — there's no amount/VAT to a handover form.
+ */
+export const DEALS_DOC_TYPES = ["deal_proposal", "unit_handover", "marketing_approval"] as const;
+export type DealsDocType = (typeof DEALS_DOC_TYPES)[number];
+
+export const ALL_DOC_TYPES = [...DOC_TYPES, ...DEALS_DOC_TYPES] as const;
+export type AnyDocType = DocType | DealsDocType;
+
+export const ALL_DOC_LABELS: Record<AnyDocType, string> = {
+  rental_contract: "Rental Contracts",
+  receipt: "Receipts",
+  tax_invoice: "Tax Invoices",
+  payment_voucher: "Payment Vouchers",
+  other: "Other / Expenses",
+  deal_proposal: "Property & Deal Proposals",
+  unit_handover: "Unit Handover & Inspection Forms",
+  marketing_approval: "Marketing Approvals",
+};
+
 export type Scope = "own" | "all";
 
 export interface Permissions {

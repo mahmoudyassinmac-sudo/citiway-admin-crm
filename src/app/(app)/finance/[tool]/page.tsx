@@ -42,7 +42,7 @@ export default async function DocumentToolPage({
 
   const { Component } = tool;
   return (
-    <DocumentHost css={tool.css} canIssue={session.permissions.can_create_finance}>
+    <DocumentHost css={tool.css} canIssue={tool.docType ? session.permissions.can_create_finance : true}>
       <Component
         company={company}
         clients={clients}

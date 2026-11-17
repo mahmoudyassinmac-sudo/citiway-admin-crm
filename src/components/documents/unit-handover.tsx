@@ -2,6 +2,7 @@
 // @ts-nocheck — ported from the original single-file Citiway tool (Project Knowledge/citiway-unit-handover.html)
 'use client';
 import React, { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback, Fragment } from 'react';
+import { useIssueDocument } from '@/components/documents/crm-bridge';
 
 
 const LOGO = "/assets/citiway-logo.png";
@@ -21,6 +22,7 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 
 /* ---------------- Checklist model ---------------- */
 const LAYOUTS = ['Studio', '1 BR', '2 BR', '3 BR', '4+ BR / Villa'];
+const PTYPES = ['Residential', 'Office', 'Shop'];
 const ITEMS = {
   entrance: ['Entrance door, lock & peephole', 'Walls & paint', 'Ceiling & lights', 'Flooring', 'Switches & sockets'],
   kitchen: ['Cabinets & countertop', 'Sink & taps', 'Cooker / hob & hood', 'Appliances (if any)'],
@@ -29,6 +31,10 @@ const ITEMS = {
   balcony: ['Door, flooring & railing'],
   maid: ['Door & lock', 'Walls, ceiling & flooring', 'Lights & ventilation'],
   general: ['Air-conditioning & thermostat', 'Windows, curtains / blinds', 'Electrical board & fittings', 'Plumbing & drainage', 'Smoke detector & intercom', 'Overall cleanliness'],
+  commEntrance: ['Main entrance door & lock', 'Reception / shop front & signage', 'Walls, ceiling & flooring', 'Lighting & sockets', 'Partitions / shelving (if any)'],
+  commPantry: ['Cabinets & countertop', 'Sink & plumbing', 'Appliances (if any)'],
+  commRestroom: ['Toilet & flush', 'Sink, taps & mirror', 'Ventilation'],
+  commGeneral: ['Air-conditioning & thermostat', 'Electrical board & fittings', 'Fire extinguisher / smoke detector', 'Plumbing & drainage', 'Windows / shutters', 'Overall cleanliness'],
 };
 function bedroomCount(d) {
   if (d.layout === 'Studio') return 0;
@@ -40,8 +46,20 @@ function bathroomCount(d) {
   const n = parseInt(d.baths, 10);
   return n > 0 ? Math.min(10, n) : bedroomCount(d);
 }
+function commRestroomCount(d) {
+  const n = parseInt(d.restrooms, 10);
+  return n > 0 ? Math.min(10, n) : 1;
+}
 function buildSections(d) {
   const s = [];
+  if (d.ptype !== 'Residential') {
+    s.push({ key: 'entrance', title: d.ptype === 'Shop' ? 'Shop Front & Floor Area' : 'Entrance & Reception Area', items: ITEMS.commEntrance });
+    if (d.pantry) s.push({ key: 'pantry', title: 'Pantry / Storage', items: ITEMS.commPantry });
+    const nr = commRestroomCount(d);
+    for (let i = 1; i <= nr; i++) s.push({ key: 'restroom' + i, title: nr === 1 ? 'Restroom' : `Restroom ${i}`, items: ITEMS.commRestroom });
+    s.push({ key: 'general', title: 'General & Systems', items: ITEMS.commGeneral });
+    return s.map((sec) => ({ ...sec, items: [...sec.items.map((label) => ({ id: sec.key + '|' + label, label })), ...((d.custom[sec.key] || []).map((c) => ({ id: sec.key + '|c|' + c.id, label: c.label, customId: c.id })))] }));
+  }
   const studio = d.layout === 'Studio';
   s.push({ key: 'entrance', title: studio ? 'Entrance & Studio Living / Sleeping Area' : 'Entrance & Living / Dining Area', items: ITEMS.entrance });
   s.push({ key: 'kitchen', title: 'Kitchen', items: ITEMS.kitchen });
@@ -225,15 +243,10 @@ function buildBlocks(d, sections) {
   B.push({ id: 'sig', node: pad(5, <>
     <div style={{ background: '#EAF1FA', borderLeft: '1.2mm solid #7AA3D8', borderRadius: '0 6px 6px 0', padding: '3mm 4.5mm', fontSize: '8.8pt', lineHeight: 1.6, textAlign: 'justify', color: '#2F3B4A' }}>{decl}</div>
     <div className="flex" style={{ gap: '12mm', marginTop: '5mm' }}>
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, maxWidth: '85mm' }}>
         <div style={sigLabel}>{moveIn ? 'Received by (Tenant)' : 'Returned by (Tenant)'}</div>
         <div style={sigBox} className="flex items-end justify-end"><span style={{ fontSize: '6.8pt', color: '#9DB8DE', padding: '1.6mm' }}>Signature</span></div>
         {line('Name:', d.tenantName)}{line('Date:', fmtDate(d.signDate))}
-      </div>
-      <div style={{ flex: 1 }}>
-        <div style={sigLabel}>{moveIn ? 'Handed over by (Citiway Real Estate)' : 'Inspected by (Citiway Real Estate)'}</div>
-        <div style={sigBox} className="flex items-end justify-end"><span style={{ fontSize: '6.8pt', color: '#9DB8DE', padding: '1.6mm' }}>Signature &amp; Stamp</span></div>
-        {line('Name:', d.agentName)}{line('Date:', fmtDate(d.signDate))}
       </div>
     </div></>) });
   return B;
@@ -364,7 +377,9 @@ const STATES = [['good', 'Good', 'bg-emerald-600'], ['repair', 'Repair', 'bg-amb
 function App() {
   const [d, setD] = useState({
     mode: 'in', refNo: 'CW-HO-2026-0001', date: today(),
+    ptype: 'Residential',
     layout: '2 BR', villaBeds: '4', baths: '', balcony: true, maid: false,
+    restrooms: '1', pantry: true,
     furnishing: 'Unfurnished',
     tenantName: '', nationality: '', unit: '', building: '', owner: '',
     eid: '', mobile: '', floor: '', community: '', parking: '',
@@ -372,12 +387,12 @@ function App() {
     checks: {}, custom: {},
     inventory: [],
     remarks: ['', '', ''],
-    agentName: '', signDate: '',
+    signDate: '',
   });
   const upd = (patch) => setD((p) => ({ ...p, ...(typeof patch === 'function' ? patch(p) : patch) }));
   const set = (k) => (e) => upd({ [k]: e.target.value });
 
-  const sections = useMemo(() => buildSections(d), [d.layout, d.villaBeds, d.baths, d.balcony, d.maid, d.custom]);
+  const sections = useMemo(() => buildSections(d), [d.ptype, d.layout, d.villaBeds, d.baths, d.balcony, d.maid, d.restrooms, d.pantry, d.custom]);
   const blocks = useMemo(() => buildBlocks(d, sections), [d, sections]);
 
   // measurement → pagination
@@ -420,6 +435,14 @@ function App() {
     try { window.print(); setPrintMsg('If no print dialog appeared, this viewer blocks printing — open the .html file in Chrome/Edge and press Ctrl/Cmd + P.'); }
     catch (e) { setPrintMsg('Printing is blocked in this viewer — open the .html file in your browser and press Ctrl/Cmd + P.'); }
   };
+  const { note: crmNote, issue, canIssue } = useIssueDocument(() => ({
+    docType: 'unit_handover',
+    docNo: d.refNo,
+    amount: 0,
+    vat: 0,
+    total: 0,
+  }));
+  const issueAndPrint = async () => { if (await issue()) doPrint(); };
 
   return (
     <div className="min-h-screen">
@@ -429,9 +452,11 @@ function App() {
             <div className="font-head font-bold tracking-wide">Unit Handover &amp; Inspection Form</div>
             <div className="text-[12px] text-blue-100">Template #7 · adapts to unit layout & furnishing · multi-page A4</div>
           </div>
-          <button onClick={doPrint} className="ml-auto btn-brand text-navy font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Print / Save as PDF</button>
+          {canIssue && <button onClick={issueAndPrint} title="Records the document in the CRM, then opens the print / PDF dialog" className="ml-auto btn-success text-white font-semibold text-sm px-4 py-2 rounded-lg whitespace-nowrap">Save &amp; Issue Document</button>}
+          <button onClick={doPrint} title="Print a draft without recording it" className="btn-brand text-navy font-semibold text-sm px-4 py-2 rounded-lg">Print / Save as PDF</button>
         </div>
         {printMsg && <div className="max-w-[1500px] mx-auto px-5 pb-3 text-[12px] text-blue-100">{printMsg}</div>}
+        {crmNote && <div className="no-print max-w-[1500px] mx-auto px-5 pb-3 text-[12px] text-blue-100">{crmNote}</div>}
       </header>
 
       <main className="max-w-[1500px] mx-auto p-5 grid gap-5 lg:grid-cols-[480px_1fr] items-start">
@@ -443,15 +468,27 @@ function App() {
               <Field label="Ref. No."><Input value={d.refNo} onChange={set('refNo')} /></Field>
               <Field label="Date"><Input type="date" value={d.date} onChange={set('date')} /></Field>
             </div>
-            <Field label="Unit Layout"><Seg options={LAYOUTS} value={d.layout} onChange={(v) => upd({ layout: v })} cols={5} /></Field>
-            <div className="grid grid-cols-2 gap-3">
-              {d.layout === '4+ BR / Villa' && <Field label="Bedrooms"><Input type="number" min="4" max="10" value={d.villaBeds} onChange={set('villaBeds')} /></Field>}
-              {d.layout !== 'Studio' && <Field label="Bathrooms" hint={`Blank = ${bedroomCount(d)} (one per bedroom)`}><Input type="number" min="1" max="10" value={d.baths} onChange={set('baths')} placeholder={String(bedroomCount(d))} /></Field>}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Switch on={d.balcony} onChange={(v) => upd({ balcony: v })} label="Balcony / Terrace" />
-              <Switch on={d.maid} onChange={(v) => upd({ maid: v })} label="Maid's / Storage Room" />
-            </div>
+            <Field label="Property Type"><Seg options={PTYPES} value={d.ptype} onChange={(v) => upd({ ptype: v })} /></Field>
+            {d.ptype === 'Residential' ? (
+              <>
+                <Field label="Unit Layout"><Seg options={LAYOUTS} value={d.layout} onChange={(v) => upd({ layout: v })} cols={5} /></Field>
+                <div className="grid grid-cols-2 gap-3">
+                  {d.layout === '4+ BR / Villa' && <Field label="Bedrooms"><Input type="number" min="4" max="10" value={d.villaBeds} onChange={set('villaBeds')} /></Field>}
+                  {d.layout !== 'Studio' && <Field label="Bathrooms" hint={`Blank = ${bedroomCount(d)} (one per bedroom)`}><Input type="number" min="1" max="10" value={d.baths} onChange={set('baths')} placeholder={String(bedroomCount(d))} /></Field>}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Switch on={d.balcony} onChange={(v) => upd({ balcony: v })} label="Balcony / Terrace" />
+                  <Switch on={d.maid} onChange={(v) => upd({ maid: v })} label="Maid's / Storage Room" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Restrooms" hint="Number of restrooms to inspect"><Input type="number" min="1" max="10" value={d.restrooms} onChange={set('restrooms')} /></Field>
+                </div>
+                <Switch on={d.pantry} onChange={(v) => upd({ pantry: v })} label="Pantry / Storage Room" />
+              </>
+            )}
             <Field label="Furnishing Status"><Seg options={['Unfurnished', 'Semi-Furnished', 'Fully Furnished']} value={d.furnishing} onChange={(v) => upd({ furnishing: v })} /></Field>
             <div className="text-[12px] rounded-md bg-brand-soft text-navy p-2">Preview: <b>{pages.length} A4 page{pages.length > 1 ? 's' : ''}</b> · {sections.length} checklist areas · {total} items</div>
           </Card>
@@ -561,12 +598,9 @@ function App() {
             <button type="button" onClick={() => upd((p) => ({ remarks: [...p.remarks, ''] }))} className="text-[12px] text-navy font-semibold hover:underline">+ Add Line</button>
           </Card>
 
-          <Card title="Signatures">
-            <div className="grid grid-cols-2 gap-2">
-              <Field label="Citiway Agent Name (optional)"><Input value={d.agentName} onChange={set('agentName')} /></Field>
-              <Field label="Signing Date (optional)"><Input type="date" value={d.signDate} onChange={set('signDate')} /></Field>
-            </div>
-            <p className="text-[11px] text-slate-500">The tenant's name prints automatically under "{d.mode === 'in' ? 'Received by' : 'Returned by'} (Tenant)".</p>
+          <Card title="Signature">
+            <Field label="Signing Date (optional)"><Input type="date" value={d.signDate} onChange={set('signDate')} /></Field>
+            <p className="text-[11px] text-slate-500">The tenant's name prints automatically under "{d.mode === 'in' ? 'Received by' : 'Returned by'} (Tenant)". No company stamp or signature is included on this form.</p>
           </Card>
         </div>
 
