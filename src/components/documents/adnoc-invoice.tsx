@@ -2,6 +2,7 @@
 // @ts-nocheck — ported from the original single-file Citiway tool (Project Knowledge/citiway-adnoc-invoice updated .html)
 'use client';
 import { useIssueDocument } from '@/components/documents/crm-bridge';
+import { StampSlot } from '@/components/documents/signoff';
 import React, { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback, Fragment } from 'react';
 
 
@@ -223,7 +224,10 @@ function AdnocSheet({ d, calc }) {
         </table>
       </div>
 
-      {/* ---------- Letterhead footer graphic (no stamp, no signature) ---------- */}
+      {/* ---------- Company stamp & signature (empty unless stamped by the Super Admin) ---------- */}
+      <StampSlot align="right" style={{ right: '49pt', bottom: '145pt', width: '210pt', height: '75pt' }} />
+
+      {/* ---------- Letterhead footer graphic ---------- */}
       <img src={PDF_FOOTER} alt="" style={{ position: 'absolute', left: '46.4pt', bottom: '16.3pt', width: '526.7pt', height: '124pt' }} />
     </div>
   );
