@@ -155,8 +155,10 @@ async function build(a: DocumentAlert, companyName: string): Promise<Built> {
   const isLetter = a.kind === "letter";
   const category = isLetter ? "Official Letter" : (DOC_CATEGORY[a.doc.doc_type] ?? "Finance Document");
   const reference = isLetter ? a.letter.ref_no : a.doc.doc_no;
+  // Points at the Documents archive, where the issued record itself is listed
+  // (not the builder page, which only creates new ones).
   const base = appUrl();
-  const link = `${base}${isLetter ? "/letters" : "/finance"}`;
+  const link = `${base}/documents`;
   const issuer = a.issuer;
   const issuerName = issuer.fullName || issuer.email || "Unknown user";
 

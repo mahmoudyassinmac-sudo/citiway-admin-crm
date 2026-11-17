@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Archive,
   Building2,
   FileText,
   Handshake,
@@ -22,6 +23,8 @@ interface NavItem {
   icon: LucideIcon;
   /** Shown only when this module is enabled for the user (admins see all). */
   module?: ModuleKey;
+  /** Shown when ANY of these modules is enabled (admins see all). */
+  anyModule?: ModuleKey[];
   adminOnly?: boolean;
 }
 
@@ -32,6 +35,8 @@ const NAV: NavItem[] = [
   { href: "/finance", label: "Finance", icon: Receipt, module: "finance" },
   { href: "/agents", label: "Agents & RERA", icon: UserCheck, module: "agents" },
   { href: "/deals", label: "Clients & Deals", icon: Handshake, module: "deals" },
+  // Own issued letters/invoices (admins & accountants with scope "all" see everyone's).
+  { href: "/documents", label: "Documents", icon: Archive, anyModule: ["letters", "finance"] },
   { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
 
@@ -64,9 +69,13 @@ export function Sidebar({
         </div>
       </div>
       <nav className="flex flex-row gap-1 overflow-x-auto px-3 pb-3 md:flex-1 md:flex-col md:overflow-y-auto">
-        {NAV.filter((n) =>
-          n.adminOnly ? role === "admin" : n.module ? role === "admin" || modules[n.module] : true,
-        ).map((n) => {
+        {NAV.filter((n) => {
+          if (n.adminOnly) return role === "admin";
+          if (role === "admin") return true;
+          if (n.module) return modules[n.module];
+          if (n.anyModule) return n.anyModule.some((m) => modules[m]);
+          return true;
+        }).map((n) => {
           const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
           const Icon = n.icon;
           return (
