@@ -53,6 +53,8 @@ export default async function Dashboard() {
     finance: p.modules.finance,
   };
   const anyDocs = show.letters || show.finance || show.deals;
+  // Commission totals are for management only — agents don't see them on the dashboard.
+  const showCommissions = show.deals && session.role !== "agent";
 
   let devs: { id: string; developer_name: string; end_date: string; has_noc: boolean }[] = [];
   let brns: { id: string; full_name: string; rera_brn: string | null; brn_expiry_date: string }[] = [];
@@ -79,7 +81,7 @@ export default async function Dashboard() {
             .lte("brn_expiry_date", cutoff)
             .order("brn_expiry_date")
         : none<(typeof brns)[number]>(),
-      show.deals ? supabase.from("deals").select("commission_aed").neq("stage", "collected") : none<{ commission_aed: number }>(),
+      showCommissions ? supabase.from("deals").select("commission_aed").neq("stage", "collected") : none<{ commission_aed: number }>(),
       show.letters
         ? supabase.from("letters").select("id, ref_no, subject, created_at, signoff_status").order("created_at", { ascending: false }).limit(5)
         : none<(typeof letters)[number]>(),
@@ -128,7 +130,7 @@ export default async function Dashboard() {
   const kpis: Kpi[] = [
     isSuperAdmin && { label: "Awaiting your stamp", value: approvals, tone: approvals ? "text-amber-700" : "text-emerald-700", sub: "open approvals →", href: "/approvals" },
     show.developers && { label: "Agreements needing attention", value: devs.length, tone: devs.length ? "text-amber-700" : "text-emerald-700", sub: `${expired} expired` },
-    show.deals && { label: own ? "My pending commissions" : "Pending commissions", value: aed(pending), tone: "text-navy", sub: `${pendingCount} open deal(s)` },
+    showCommissions && { label: "Pending commissions", value: aed(pending), tone: "text-navy", sub: `${pendingCount} open deal(s)` },
     show.agents && { label: "BRN cards expiring ≤ 30d", value: brns.length, tone: brns.length ? "text-amber-700" : "text-emerald-700", sub: "active agents" },
     anyDocs && !isSuperAdmin && { label: "Waiting for stamp", value: waiting, tone: waiting ? "text-amber-700" : "text-navy", sub: "with the Super Admin", href: "/documents" },
     anyDocs && !isSuperAdmin && { label: "Returned to me", value: returned, tone: returned ? "text-red-600" : "text-emerald-700", sub: returned ? "needs fixing" : "nothing returned", href: "/documents" },
