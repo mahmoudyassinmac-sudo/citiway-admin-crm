@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Download, Stamp, X } from "lucide-react";
-import { approveDocument, getDocumentPdfUrl, rejectDocument } from "@/app/(app)/documents/archive-actions";
+import { Check, Download, Stamp, Trash2, X } from "lucide-react";
+import { approveDocument, deleteDocument, getDocumentPdfUrl, rejectDocument } from "@/app/(app)/documents/archive-actions";
 import { SIGNOFF_LABEL, type DocTable, type SignoffStatus } from "@/lib/signoff";
 
 export interface ArchiveInfo {
@@ -97,6 +97,33 @@ export function SignoffButtons({ table, id, reference, allowReject = true }: { t
   );
 }
 
+/** Super Admin: permanently delete a document and its archived PDFs. */
+export function DeleteDocButton({ table, id, reference }: { table: DocTable; id: string; reference: string }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  async function remove() {
+    const typed = window.prompt(
+      `Delete ${reference} permanently?\n\nThe record and all its PDFs (including stamped copies) will be removed and cannot be recovered.\n\nType DELETE to confirm:`,
+      "",
+    );
+    if (typed === null) return;
+    if (typed.trim().toUpperCase() !== "DELETE") {
+      window.alert("Not deleted — you need to type DELETE to confirm.");
+      return;
+    }
+    setBusy(true);
+    const res = await deleteDocument(table, id);
+    setBusy(false);
+    if (!res.ok) window.alert(res.error);
+    else router.refresh();
+  }
+  return (
+    <button onClick={remove} disabled={busy} title="Delete permanently" className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:underline disabled:opacity-60">
+      <Trash2 className="h-3.5 w-3.5" /> {busy ? "Deleting…" : "Delete"}
+    </button>
+  );
+}
+
 /** PDF + sign-off status cell used in the Documents archive. */
 export function ArchiveCell({ table, id, reference, info, isSuperAdmin }: { table: DocTable; id: string; reference: string; info: ArchiveInfo; isSuperAdmin: boolean }) {
   return (
@@ -111,6 +138,7 @@ export function ArchiveCell({ table, id, reference, info, isSuperAdmin }: { tabl
       {isSuperAdmin && info.has_pdf && info.stampable && info.signoff_status !== "approved" && (
         <SignoffButtons table={table} id={id} reference={reference} allowReject={info.signoff_status === "pending"} />
       )}
+      {isSuperAdmin && <DeleteDocButton table={table} id={id} reference={reference} />}
     </div>
   );
 }

@@ -222,3 +222,37 @@ export async function rejectDocument(table: DocTable, id: string, note: string):
   revalidatePath("/documents");
   return { ok: true, message: "Returned to the issuer." };
 }
+
+/* --------------------------------------------------------------- delete (Super Admin) */
+
+/** Permanently deletes a document record and every PDF archived for it. Super Admin only. */
+export async function deleteDocument(table: DocTable, id: string): Promise<Result<{ message: string }>> {
+  const s = await superAdmin();
+  if (!s) return { ok: false, error: "Only the Super Admin can delete documents." };
+  if (!validTarget(table, id)) return { ok: false, error: "Invalid document." };
+
+  const admin = createAdminClient();
+  const { data: row } = await admin
+    .from(table)
+    .select(table === "letters" ? "ref_no" : "doc_no")
+    .eq("id", id)
+    .maybeSingle();
+  if (!row) return { ok: false, error: "Document not found (maybe already deleted)." };
+  const ref = reference(table, row as unknown as Record<string, unknown>);
+
+  // Remove the archived PDFs (original + stamped copies) first, then the record.
+  const folder = `${table}/${id}`;
+  const { data: files } = await admin.storage.from(BUCKET).list(folder, { limit: 1000 });
+  if (files?.length) {
+    const { error: rmErr } = await admin.storage.from(BUCKET).remove(files.map((f) => `${folder}/${f.name}`));
+    if (rmErr) return { ok: false, error: `Could not delete the PDF files: ${rmErr.message}` };
+  }
+
+  const { error } = await admin.from(table).delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/documents");
+  revalidatePath("/approvals");
+  revalidatePath("/");
+  return { ok: true, message: `${ref} deleted.` };
+}
