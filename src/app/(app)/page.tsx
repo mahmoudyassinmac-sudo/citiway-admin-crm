@@ -12,7 +12,7 @@ import {
   formatDate,
   todayInDubai,
 } from "@/lib/developers";
-import { ALL_DOC_LABELS, type AnyDocType } from "@/lib/permissions";
+import { ALL_DOC_LABELS, DEALS_DOC_TYPES, type AnyDocType } from "@/lib/permissions";
 import type { SignoffStatus } from "@/lib/signoff";
 import { createClient } from "@/lib/supabase/server";
 
@@ -84,7 +84,12 @@ export default async function Dashboard() {
         ? supabase.from("letters").select("id, ref_no, subject, created_at, signoff_status").order("created_at", { ascending: false }).limit(5)
         : none<(typeof letters)[number]>(),
       show.finance
-        ? supabase.from("finance_documents").select("id, doc_type, doc_no, total_aed, created_at, signoff_status").order("created_at", { ascending: false }).limit(5)
+        ? supabase
+            .from("finance_documents")
+            .select("id, doc_type, doc_no, total_aed, created_at, signoff_status")
+            .not("doc_type", "in", `(${DEALS_DOC_TYPES.join(",")})`)
+            .order("created_at", { ascending: false })
+            .limit(5)
         : none<(typeof docs)[number]>(),
       // Documents waiting on the Super Admin, or sent back (RLS limits these to what the user may see).
       show.letters && !isSuperAdmin
